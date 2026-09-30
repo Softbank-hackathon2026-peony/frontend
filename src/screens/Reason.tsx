@@ -19,7 +19,7 @@ export function Reason({ fileName, projectId, onYes, onPick, onRestart }: Props)
       <div className="rhead">
         <Dog pose="eureka" still className="minidog" />
         <div>
-          <div className="eyebrow">예시 분석 결과 (분석 API 준비 중) · {fileName} · <code>{projectId}</code></div>
+          <div className="eyebrow">예시 분석 결과 (분석 API 준비 중) · <span className="raw">{fileName}</span> · <code>{projectId}</code></div>
           <h2>그래서 <em>{DECISION.name}</em>로 배포하기로 했어</h2>
           <p>네 코드에서 찾은 단서 4개가 전부 한 방향을 가리켰거든. 아래에서 하나씩 확인해 봐.</p>
         </div>

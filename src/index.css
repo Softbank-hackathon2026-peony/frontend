@@ -11,12 +11,16 @@
   --body: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
   --hand: 'Gaegu', 'Noto Sans KR', cursive, sans-serif;
   --shadow: 0 18px 40px -20px rgba(0, 0, 0, .28);
+  --hl-a: 12%; --hl-b: 88%;   /* 제목 마커 띠 */
+  --hl2-a: 50%; --hl2-b: 92%; /* 본문 형광펜 밑줄 */
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #161616; --surface: #222222; --fg: #F2F2F2; --muted: #A3A3A3; --line: #363636;
     --accent-soft: #3D3416; --good: #9BD65A; --warn: #F0C24A; --bad: #F58AB5;
     --shadow: 0 18px 40px -20px rgba(0, 0, 0, .7);
+    --fur-light: #F3D39A;
+    --hl-a: 0%; --hl-b: 100%; --hl2-a: 0%; --hl2-b: 100%;
     color-scheme: dark;
   }
 }
@@ -54,12 +58,12 @@ button { font: inherit; cursor: pointer; color: inherit; }
 /* ---------- 1. landing ---------- */
 .landing { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; text-align: center; }
 .drop { position: relative; width: min(440px, 82vw); aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; border-radius: 50%; cursor: pointer; transition: transform .25s cubic-bezier(.2,1.4,.4,1); }
-.drop svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; }
-.drop svg.ring circle { fill: var(--surface); stroke: var(--fg); stroke-width: 3.5; stroke-dasharray: 22 16; stroke-linecap: round; transition: fill .2s, stroke-width .2s; animation: march 14s linear infinite; }
+.drop svg.drop-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.drop svg.drop-ring circle { fill: var(--surface); stroke: var(--fg); stroke-width: 3.5; stroke-dasharray: 22 16; stroke-linecap: round; transition: fill .2s, stroke-width .2s; animation: march 14s linear infinite; }
 @keyframes march { to { stroke-dashoffset: -380; } }
 .drop .inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px; }
 .drop h1 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 7vw, 46px); line-height: 1.15; margin: 0; text-wrap: balance; }
-.drop h1 mark { background: linear-gradient(transparent 12%, var(--accent) 12%, var(--accent) 88%, transparent 88%); color: inherit; padding: 0 .15em; }
+.drop h1 mark { background: linear-gradient(transparent var(--hl-a), var(--accent) var(--hl-a), var(--accent) var(--hl-b), transparent var(--hl-b)); color: var(--accent-ink); padding: 0 .15em; }
 .drop p { margin: 0; color: var(--muted); font-size: 15px; }
 .drop .arrow { width: 44px; height: 44px; color: var(--fg); animation: bob 1.6s ease-in-out infinite; }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
@@ -155,10 +159,10 @@ button { font: inherit; cursor: pointer; color: inherit; }
 .rhead { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: end; }
 .rhead .minidog { width: 120px; margin-top: 0; }
 .rhead h2 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 5vw, 42px); line-height: 1.15; margin: 0; text-wrap: balance; }
-.rhead h2 em, .build h2 em { font-style: normal; background: linear-gradient(transparent 12%, var(--accent) 12%, var(--accent) 88%, transparent 88%); padding: 0 .12em; }
+.rhead h2 em, .build h2 em { font-style: normal; background: linear-gradient(transparent var(--hl-a), var(--accent) var(--hl-a), var(--accent) var(--hl-b), transparent var(--hl-b)); color: var(--accent-ink); padding: 0 .12em; }
 .rhead p { margin: 6px 0 0; color: var(--muted); }
 .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
-.eyebrow code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0; text-transform: none; }
+.eyebrow code, .eyebrow .raw { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0; text-transform: none; }
 
 .flow { display: grid; grid-template-columns: minmax(0, 1.2fr) 72px minmax(0, 1fr); gap: 16px; align-items: stretch; }
 .clues { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
@@ -168,7 +172,7 @@ button { font: inherit; cursor: pointer; color: inherit; }
 .clue .txt { min-width: 0; }
 .clue .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); }
 .clue .find { font-weight: 500; font-size: 15px; margin-top: 2px; }
-.clue .find mark { background: linear-gradient(transparent 50%, var(--accent) 50%, var(--accent) 92%, transparent 92%); color: inherit; padding: 0 2px; }
+.clue .find mark { background: linear-gradient(transparent var(--hl2-a), var(--accent) var(--hl2-a), var(--accent) var(--hl2-b), transparent var(--hl2-b)); color: var(--accent-ink); padding: 0 2px; }
 .clue .plain { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .tag { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: color-mix(in srgb, var(--c) 18%, var(--surface)); color: var(--fg); border: 1.5px solid var(--c); }
 
@@ -247,7 +251,7 @@ button { font: inherit; cursor: pointer; color: inherit; }
   .history .del { grid-column: 3; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .drop svg.ring circle, .drop .arrow, .dog .pupil, .dog .lid, .dog .tail, .dog .arm-chin, .dog .foot-top, .thinks i, .dog .sweat, .steps li.doing .dot { animation: none !important; }
+  .drop svg.drop-ring circle, .drop .arrow, .dog .pupil, .dog .lid, .dog .tail, .dog .arm-chin, .dog .foot-top, .thinks i, .dog .sweat, .steps li.doing .dot { animation: none !important; }
   .dog, .bubble, .burst, .ddiyong { transition-duration: .01s !important; }
   .clue, .decide, .meter .bar i { animation-duration: .01s !important; animation-delay: 0s !important; }
 }
