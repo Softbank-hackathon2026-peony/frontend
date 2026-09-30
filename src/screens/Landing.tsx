@@ -35,7 +35,7 @@ export function Landing({ onFile, historyCount, onOpenHistory }: Props) {
         onDrop={onDrop}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click() } }}
       >
-        <svg className="ring" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96" /></svg>
+        <svg className="drop-ring" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96" /></svg>
         <div className="inner">
           <ArrowDownIcon className="arrow" />
           <h1><mark>너의 파일을</mark><br />넣어줘!</h1>
