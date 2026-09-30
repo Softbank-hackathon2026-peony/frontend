@@ -90,9 +90,15 @@ export function Thinking({ file, progress, uploadDone, uploadError, onRetry, onC
             </div>
           </div>
         ) : (
-          <div className={`bubble${eureka ? ' eureka' : ''}`}>
+          <div className={`bubble${eureka ? ' eureka' : ' thought'}`}>
             <span>{waitingUpload ? '조각이 다 올라갈 때까지 잠깐만…' : line}</span>
             {typing && <span className="cursor" />}
+            {eureka && (
+              <svg className="tail" viewBox="0 0 32 20" aria-hidden="true">
+                <polygon points="1,0 31,0 16,18" className="tail-fill" />
+                <path d="M1 0 L16 18 L31 0" className="tail-line" />
+              </svg>
+            )}
           </div>
         )}
         <Dog pose={eureka ? 'eureka' : 'think'} decor />

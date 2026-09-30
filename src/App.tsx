@@ -4,6 +4,7 @@ import { Landing } from './screens/Landing'
 import { Thinking } from './screens/Thinking'
 import { Reason } from './screens/Reason'
 import { Build } from './screens/Build'
+import { HistoryPanel } from './components/HistoryPanel'
 import { describeApiError, getStatus } from './api/fawploy'
 import { uploadProject, type UploadProgress, type UploadResult } from './api/upload'
 import { loadHistory, removeRecord, saveRecord, updateRecord, type UploadRecord } from './api/history'
@@ -17,6 +18,7 @@ function App() {
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [api, setApi] = useState<'checking' | 'ok' | 'down'>('checking')
+  const [historyOpen, setHistoryOpen] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const pendingRef = useRef<UploadRecord | null>(null)
 
@@ -75,15 +77,11 @@ function App() {
         <PawIcon className="paw" />
         Pawploy <small>배포 멍멍이</small>
         <span className={`api ${api}`} title="백엔드 상태"><i />{api === 'ok' ? '서버 연결됨' : api === 'down' ? '서버 응답 없음' : '서버 확인 중'}</span>
+        <button className="histbtn" type="button" onClick={() => setHistoryOpen(true)} aria-haspopup="dialog">히스토리{history.length > 0 && <b>{history.length}</b>}</button>
       </div>
 
       {stage.name === 'landing' && (
-        <Landing
-          history={history}
-          onFile={onFile}
-          onOpenRecord={(rec) => setStage(rec.decision ? { name: 'build', rec, target: rec.decision } : { name: 'reason', rec })}
-          onDeleteRecord={(rec) => { removeRecord(rec.uploadId); setHistory(loadHistory()) }}
-        />
+        <Landing onFile={onFile} historyCount={history.length} onOpenHistory={() => setHistoryOpen(true)} />
       )}
       {stage.name === 'thinking' && (
         <Thinking
@@ -105,6 +103,13 @@ function App() {
           onRestart={cancelToLanding}
         />
       )}
+      <HistoryPanel
+        open={historyOpen}
+        history={history}
+        onClose={() => setHistoryOpen(false)}
+        onOpen={(rec) => { abortRef.current?.abort(); setStage(rec.decision ? { name: 'build', rec, target: rec.decision } : { name: 'reason', rec }) }}
+        onDelete={(rec) => { removeRecord(rec.uploadId); setHistory(loadHistory()) }}
+      />
       {stage.name === 'build' && <Build target={stage.target} projectId={stage.rec.projectId} uploadId={stage.rec.uploadId} onRestart={cancelToLanding} />}
     </main>
   )

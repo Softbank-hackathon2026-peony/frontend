@@ -1,23 +1,11 @@
 import { useRef, useState, type DragEvent } from 'react'
-import { ArrowDownIcon, FileIcon } from '../components/Icons'
+import { ArrowDownIcon } from '../components/Icons'
 import { SUPPORTED_EXTENSIONS } from '../api/fawploy'
 import { fileExtensionSupported } from '../api/upload'
-import type { UploadRecord } from '../api/history'
 
-type Props = {
-  history: UploadRecord[]
-  onFile: (file: File) => void
-  onOpenRecord: (rec: UploadRecord) => void
-  onDeleteRecord: (rec: UploadRecord) => void
-}
+type Props = { onFile: (file: File) => void; historyCount: number; onOpenHistory: () => void }
 
-const fmtSize = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(b / 1024))}KB`)
-const fmtDate = (iso: string) => {
-  const d = new Date(iso)
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-export function Landing({ history, onFile, onOpenRecord, onDeleteRecord }: Props) {
+export function Landing({ onFile, historyCount, onOpenHistory }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,23 +49,8 @@ export function Landing({ history, onFile, onOpenRecord, onDeleteRecord }: Props
         <button className="linkbtn" type="button" onClick={() => inputRef.current?.click()}>파일 골라서 넣기</button>
       </div>
 
-      {history.length > 0 && (
-        <div className="history">
-          <h3>최근 올린 파일 <small>이 브라우저에 남아 있어</small></h3>
-          <ul>
-            {history.map((rec) => (
-              <li key={rec.uploadId}>
-                <FileIcon />
-                <div className="nm">
-                  <b>{rec.fileName}</b>
-                  <span>{fmtSize(rec.sizeBytes)} · {fmtDate(rec.uploadedAt)} · {rec.projectId}{rec.decision ? ` · ${rec.decision}` : ''}</span>
-                </div>
-                <button className="open" type="button" onClick={() => onOpenRecord(rec)}>이어 보기</button>
-                <button className="del" type="button" aria-label="기록 지우기" onClick={() => onDeleteRecord(rec)}>지우기</button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {historyCount > 0 && (
+        <p className="landing-hint">전에 올린 파일 {historyCount}개가 있어. <button className="linkbtn" type="button" onClick={onOpenHistory}>히스토리에서 이어 보기</button></p>
       )}
     </section>
   )
