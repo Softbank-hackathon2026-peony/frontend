@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Dog } from '../components/Dog'
-import type { Analysis } from '../api/fawploy'
+import { isAnalysisReady, type Analysis } from '../api/fawploy'
 
 export type WorkPhase = 'creating' | 'registering' | 'storing' | 'analyzing' | 'error'
 type Props = {
@@ -35,7 +35,7 @@ export function Thinking({ repositoryUrl, phase, error, analysis, onRetry, onCan
   const finishedRef = useRef(onFinished); finishedRef.current = onFinished
   const label = analysis?.recommendation?.label ?? '거기'
   const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  const ready = analysis?.status === 'ready' && !!analysis.recommendation
+  const ready = !!analysis && isAnalysisReady(analysis)
 
   // 고민 대사 (분석 전 단계에선 상태 문구, 분석 중엔 대사 순환)
   useEffect(() => {

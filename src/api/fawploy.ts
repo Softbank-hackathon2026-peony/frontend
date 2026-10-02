@@ -1,6 +1,6 @@
 // Fawploy 메인 서버 API 클라이언트.
 // 구현됨: 상태, 프로젝트 생성, GitHub 소스 등록/조회.
-// 합의됨(2026-10-02, 구현 대기): 분석 시작/조회, 승인·수정, 배포 상태 조회, 지금 종료. 아래 주석의 계약을 따른다.
+// 분석·배포 API 클라이언트. 분석 완료 상태는 백엔드/AgentCore 응답의 `analyzed`도 허용한다.
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? 'https://fawploy.teampeony.net').replace(/\/$/, '')
 const API = `${BASE}/api/v1`
 
@@ -63,7 +63,7 @@ export type Recommendation = {
   commit_sha?: string
   created_at?: string
 }
-export type AnalysisStatus = 'queued' | 'running' | 'ready' | 'failed'
+export type AnalysisStatus = 'queued' | 'running' | 'analyzing' | 'ready' | 'analyzed' | 'ok' | 'failed'
 export type Analysis = {
   analysis_id: string
   status: AnalysisStatus
@@ -72,6 +72,8 @@ export type Analysis = {
   validation_notes?: string[]
   build_files?: { dockerfile?: string; buildspec?: string; uri_prefix?: string; attempt?: number }
 }
+export const isAnalysisReady = (analysis: Analysis) =>
+  (analysis.status === 'ready' || analysis.status === 'analyzed' || analysis.status === 'ok') && !!analysis.recommendation
 export type Decision = { action: 'approve'; target: string } | { action: 'revise'; revision_message: string }
 export type DecisionResult = { deployment_id?: string; analysis_id?: string; status?: string }
 

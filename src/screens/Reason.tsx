@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { Dog } from '../components/Dog'
 import { BoxIcon, ChipIcon, ClockIcon, CloudIcon } from '../components/Icons'
-import type { Analysis, Candidate, Cost } from '../api/fawploy'
+import type { Analysis, Cost } from '../api/fawploy'
 
 type Props = {
   analysis: Analysis
@@ -15,7 +14,6 @@ type Props = {
 
 const ICONS = [CloudIcon, ClockIcon, ChipIcon, BoxIcon]
 const COLORS = ['var(--blue)', 'var(--orange)', 'var(--purple)', 'var(--green)', 'var(--pink)']
-const verdictClass = (v: string) => (/추천|적합|좋음/.test(v) ? 'v-good' : /낭비|불가|부적합/.test(v) ? 'v-bad' : 'v-warn')
 const cloudLabel = (c: string) => (c === 'gcp' ? 'GCP' : c === 'aws' ? 'AWS' : c.toUpperCase())
 
 function CostLine({ cost }: { cost?: Cost }) {
@@ -34,13 +32,11 @@ function CostLine({ cost }: { cost?: Cost }) {
   )
 }
 
-export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevise, onRestart }: Props) {
+export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRestart }: Props) {
   const rec = analysis.recommendation!
-  const [showAlts, setShowAlts] = useState(false)
-  const [chosen, setChosen] = useState<Candidate | null>(null)
-  const [message, setMessage] = useState('')
-  const candidates = [...rec.candidates].sort((a, b) => a.rank - b.rank)
   const canDeploy = rec.supported !== false
+  const clues = rec.clues.slice(0, 3)
+  const warnings = rec.warnings.slice(0, 3)
 
   return (
     <section className="reason" aria-label="선택 이유">
@@ -56,16 +52,16 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
       {!canDeploy && (
         <div className="warnbox" role="alert">
           <b>이 프로젝트는 아직 자동 배포가 안 돼.</b>
-          <ul>{rec.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
+          <ul>{warnings.map((w) => <li key={w}>{w}</li>)}</ul>
         </div>
       )}
       {canDeploy && rec.warnings.length > 0 && (
-        <div className="warnbox soft"><b>미리 알아둘 것</b><ul>{rec.warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>
+        <div className="warnbox soft"><b>미리 알아둘 것</b><ul>{warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>
       )}
 
       <div className="flow">
         <div className="clues">
-          {rec.clues.map((c, i) => {
+          {clues.map((c, i) => {
             const Icon = ICONS[i % ICONS.length]
             return (
               <div className="clue" key={`${c.file}-${c.line}-${i}`} style={{ '--c': COLORS[i % COLORS.length], '--i': i } as React.CSSProperties}>
@@ -90,6 +86,9 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
           <div className="eyebrow">결정 · {cloudLabel(rec.cloud)}{rec.size && ` · ${rec.size}`}</div>
           <h3>{rec.label}</h3>
           <div className="why">{rec.reason}</div>
+          {(rec.container_port || rec.health_path) && (
+            <div className="deployspec"><b>배포 설정</b><span>{rec.container_port ? `포트 ${rec.container_port}` : ''}{rec.container_port && rec.health_path ? ' · ' : ''}{rec.health_path ? `헬스체크 ${rec.health_path}` : ''}</span></div>
+          )}
           <CostLine cost={rec.cost} />
           {rec.permissions.length > 0 && (
             <div className="perm"><b>배포된 앱이 받는 권한</b><ul>{rec.permissions.map((p) => <li key={p}>{p}</li>)}</ul></div>
@@ -102,48 +101,11 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
 
       {error && <p className="err" role="alert">{error}</p>}
 
-      {!showAlts ? (
-        <div className="choice">
-          <p className="lead">이대로 갈까?</p>
-          <button className="btn primary big" type="button" disabled={busy || !canDeploy} onClick={() => onApprove(rec.target)}>{busy ? '시작하는 중…' : '좋아!'}</button>
-          <button className="btn ghost" type="button" disabled={busy} onClick={() => setShowAlts(true)}>아니 다른거 할래</button>
-        </div>
-      ) : (
-        <div className="alts">
-          <h4>그럼 어디에 올릴까?</h4>
-          <p className="sub">멍멍이가 비교한 {candidates.length}가지야. 하나 고르거나, 원하는 조건을 적어 주면 다시 분석할게.</p>
-          <div className="altgrid">
-            {candidates.map((a) => (
-              <button
-                key={a.target}
-                type="button"
-                className={`alt${a.rank === 1 ? ' pick' : ''}${chosen?.target === a.target ? ' chosen' : ''}${a.deployable ? '' : ' off'}`}
-                style={{ '--c': COLORS[(a.rank - 1) % COLORS.length] } as React.CSSProperties}
-                disabled={!a.deployable || busy}
-                onClick={() => setChosen(a)}
-                aria-pressed={chosen?.target === a.target}
-              >
-                <div className="name"><span className="rank">{a.rank}</span>{a.label} <span className="cloud">{cloudLabel(a.cloud)}</span><span className={`verdict ${verdictClass(a.verdict)}`}>{a.deployable ? a.verdict : '비교용'}</span></div>
-                <p>{a.why}</p>
-                {a.size_spec && <p className="spec">{a.size_spec}</p>}
-                <div className="meter"><span>적합도</span><div className="bar"><i style={{ '--w': `${a.fit}%` } as React.CSSProperties} /></div><span>{a.fit}%</span></div>
-                <CostLine cost={a.cost} />
-                {!a.deployable && <p className="spec">지금은 배포 불가 · 비교용으로만 보여 줘</p>}
-              </button>
-            ))}
-          </div>
-          <div className="revise">
-            <label htmlFor="revision">또는 조건을 말해 줘</label>
-            <textarea id="revision" rows={2} maxLength={500} placeholder="예: 항상 켜져 있어야 해 / GCP 로 가고 싶어 / 월 5달러 넘기지 마" value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} />
-          </div>
-          <div className="altfoot">
-            <button className="btn dark" type="button" disabled={!chosen || busy} onClick={() => chosen && onApprove(chosen.target)}>{chosen ? `${chosen.label}로 만들기` : '이걸로 만들기'}</button>
-            <button className="btn primary" type="button" disabled={!message.trim() || busy} onClick={() => onRevise(message.trim())}>{busy ? '보내는 중…' : '이 조건으로 다시 분석'}</button>
-            <button className="btn ghost" type="button" disabled={busy} onClick={onRestart}>처음부터 다시</button>
-            <span className="note">{chosen ? (chosen.rank === 1 ? '멍멍이 추천이랑 같아!' : '멍멍이 추천은 아니지만 네 선택을 존중할게') : '카드를 고르거나 조건을 적어 줘'}</span>
-          </div>
-        </div>
-      )}
+      <div className="choice">
+        <p className="lead">이 추천으로 배포할까?</p>
+        <button className="btn primary big" type="button" disabled={busy || !canDeploy} onClick={() => onApprove(rec.target)}>{busy ? '시작하는 중…' : `${rec.label}로 배포하기`}</button>
+        <button className="btn ghost" type="button" disabled={busy} onClick={onRestart}>처음부터 다시</button>
+      </div>
     </section>
   )
 }

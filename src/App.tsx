@@ -7,7 +7,7 @@ import { Build } from './screens/Build'
 import { Deployed } from './screens/Deployed'
 import { HistoryPanel } from './components/HistoryPanel'
 import * as api from './api'
-import { isDeployed, type Analysis, type Deployment } from './api/fawploy'
+import { isAnalysisReady, isDeployed, type Analysis, type Deployment } from './api/fawploy'
 import { loadHistory, removeRecord, saveRecord, type SourceRecord } from './api/history'
 
 // 화면 흐름: landing → working(소스 보관 → 분석) → reason(근거·선택) → deploying(단계) → deployed(URL·카운트다운)
@@ -149,7 +149,7 @@ function App() {
       loop(async () => {
         const analysis = await api.getAnalysis(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
-        if (analysis.status === 'ready' && analysis.recommendation) { setStage({ name: 'working', input: stage.input, phase: 'analyzing', error: null, record: rec, analysis }); return true }
+        if (isAnalysisReady(analysis)) { setStage({ name: 'reason', record: rec, analysis, busy: false, error: null }); return true }
         if (analysis.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: analysis.error_message || '분석에 실패했어요.', record: rec, analysis: null }); return true }
         return false
       }, POLL.analysis, LIMIT.analysis)
