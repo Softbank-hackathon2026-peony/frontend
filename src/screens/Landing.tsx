@@ -1,57 +1,48 @@
-import { useRef, useState, type DragEvent } from 'react'
-import { ArrowDownIcon } from '../components/Icons'
-import { SUPPORTED_EXTENSIONS } from '../api/fawploy'
-import { fileExtensionSupported } from '../api/upload'
+import { useState, type FormEvent } from 'react'
 
-type Props = { onFile: (file: File) => void; historyCount: number; onOpenHistory: () => void }
+export type SourceInput = { githubUrl: string; ref: string; projectName: string }
+type Props = { onSubmit: (input: SourceInput) => void; historyCount: number; onOpenHistory: () => void }
 
-export function Landing({ onFile, historyCount, onOpenHistory }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [over, setOver] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function Landing({ onSubmit, historyCount, onOpenHistory }: Props) {
+  const [githubUrl, setGithubUrl] = useState('')
+  const [ref, setRef] = useState('')
+  const [projectName, setProjectName] = useState('')
+  const [error, setError] = useState('')
 
-  const pick = (files: FileList | null) => {
-    const file = files?.[0]
-    if (!file) return
-    if (!fileExtensionSupported(file.name)) {
-      setError(`${file.name} 은(는) 아직 못 받아. 지원 형식: ${SUPPORTED_EXTENSIONS.join(', ')}`)
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    let url: URL
+    try { url = new URL(githubUrl.trim()) } catch { setError('GitHub 저장소 주소를 입력해 주세요.'); return }
+    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port || url.search || url.hash ||
+        !/^\/[A-Za-z0-9-]+\/[A-Za-z0-9_.-]+(?:\.git)?\/?$/.test(url.pathname)) {
+      setError('https://github.com/소유자/저장소 형식의 공개 저장소 주소가 필요해요.')
       return
     }
-    setError(null)
-    onFile(file)
+    const name = projectName.trim() || url.pathname.split('/')[2].replace(/\.git$/, '')
+    if (name.length > 80) { setError('프로젝트 이름은 80자 이하로 입력해 주세요.'); return }
+    setError('')
+    onSubmit({ githubUrl: githubUrl.trim(), ref: ref.trim(), projectName: name })
   }
-  const onDrop = (e: DragEvent) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files) }
 
   return (
-    <section className="landing" aria-label="파일 넣기">
-      <div
-        className={`drop${over ? ' over' : ''}`}
-        role="button"
-        tabIndex={0}
-        aria-label="파일을 드래그해서 놓거나 클릭해서 고르기"
-        onDragEnter={(e) => { e.preventDefault(); setOver(true) }}
-        onDragOver={(e) => { e.preventDefault(); setOver(true) }}
-        onDragLeave={(e) => { e.preventDefault(); setOver(false) }}
-        onDrop={onDrop}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click() } }}
-      >
-        <svg className="drop-ring" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96" /></svg>
-        <div className="inner">
-          <ArrowDownIcon className="arrow" />
-          <h1><mark>너의 파일을</mark><br />넣어줘!</h1>
-          <p>zip이나 소스 파일을 여기에 끌어다 놓아</p>
-        </div>
-        <input ref={inputRef} type="file" accept={SUPPORTED_EXTENSIONS.join(',')} aria-label="파일 선택" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
+    <section className="landing" aria-label="GitHub 저장소 등록">
+      <div className="source-card">
+        <div className="source-badge">GitHub → 플랫폼 S3</div>
+        <h1><mark>공개 GitHub 주소</mark>를<br />알려줘!</h1>
+        <p>원하는 브랜치나 커밋을 선택하면 해당 시점의 코드를 보관할게.</p>
+        <form className="source-form" onSubmit={submit}>
+          <label htmlFor="github-url">공개 저장소 URL</label>
+          <input id="github-url" type="url" autoComplete="url" required placeholder="https://github.com/owner/repo" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+          <label htmlFor="github-ref">브랜치 · 태그 · 커밋 <span>(선택)</span></label>
+          <input id="github-ref" type="text" maxLength={200} placeholder="비우면 기본 브랜치" value={ref} onChange={(e) => setRef(e.target.value)} />
+          <label htmlFor="project-name">프로젝트 이름 <span>(선택)</span></label>
+          <input id="project-name" type="text" maxLength={80} placeholder="비우면 저장소 이름" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+          {error && <p className="err" role="alert">{error}</p>}
+          <button className="btn primary big" type="submit">소스 가져오기</button>
+        </form>
+        <p className="source-note">현재는 공개 GitHub 저장소만 지원해. 소스 보관만 진행하며 분석·빌드는 아직 시작하지 않아.</p>
       </div>
-      {error && <p className="err" role="alert">{error}</p>}
-      <div className="landing-foot">
-        <span>드래그가 안 되면</span>
-        <button className="linkbtn" type="button" onClick={() => inputRef.current?.click()}>파일 골라서 넣기</button>
-      </div>
-
-      {historyCount > 0 && (
-        <p className="landing-hint">전에 올린 파일 {historyCount}개가 있어. <button className="linkbtn" type="button" onClick={onOpenHistory}>히스토리에서 이어 보기</button></p>
-      )}
+      {historyCount > 0 && <p className="landing-hint">저장한 소스 {historyCount}개 · <button className="linkbtn" type="button" onClick={onOpenHistory}>히스토리 보기</button></p>}
     </section>
   )
 }

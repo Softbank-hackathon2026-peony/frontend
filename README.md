@@ -1,28 +1,15 @@
 # Pawploy frontend
 
-파일을 넣으면 배포 멍멍이가 고민하다가 배포 방식을 골라 주는 화면. Vite + React + TypeScript + Tailwind v4.
+Vite + React + TypeScript + Tailwind CSS. 현재 백엔드 구현 범위인 **공개 GitHub 저장소의 특정 커밋을 S3에 보관**하는 화면이다. 파일 업로드, AI 분석, 이미지 빌드, 실제 배포는 아직 지원하지 않는다.
 
 ```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # tsc + vite build → dist/
+npm ci
+npm run dev
+npm run build
 ```
 
-## 백엔드 연결
+기본 API 주소는 `https://fawploy.teampeony.net`이다. 변경하려면 `VITE_API_BASE_URL` 환경 변수를 사용한다 (`.env.example` 참고).
 
-- 기본 주소는 `https://fawploy.yyoungjin.com`. 바꾸려면 `.env` 에 `VITE_API_BASE_URL` 을 넣는다 (`.env.example` 참고).
-- 파일을 넣으면 `src/api/upload.ts` 가 프로젝트 생성 → 멀티파트 presign → 파트별 S3 PUT(동시 3개) → complete 순서로 실제 업로드한다. 실패·취소 시 abort 로 정리한다.
-- S3 파트 업로드 응답의 `ETag` 헤더를 읽어야 하므로 버킷 CORS 에 `ExposeHeaders: ETag` 가 필요하다.
-- 분석·배포 API 는 아직 없다. 근거 화면(`src/data/analysis.ts`)과 만드는 중 화면은 예시 연출이고, API 가 생기면 그 파일과 `Build.tsx` 를 교체한다.
+사용자가 저장소 URL과 선택적 ref/프로젝트 이름을 입력하면 프론트가 프로젝트를 만들고 GitHub 소스를 등록한다. 백엔드가 반환한 커밋 SHA로 S3 보관 상태를 조회하며 `ready` 또는 `failed`까지 폴링한다. 새로고침 후에도 히스토리에서 다시 확인할 수 있다.
 
-## 새로고침 후에도 남는 것
-
-로그인과 목록 API 가 없어서 올린 기록(`project_id`, `upload_id`, 파일명, `project_token`)을 `localStorage` 에 최대 10개 저장한다 (`src/api/history.ts`). 랜딩의 "최근 올린 파일"에서 이어 볼 수 있다. 로그인이 생기면 서버 조회로 바꾼다.
-
-## 화면 흐름
-
-1. 랜딩: 원형 점선에 드래그앤드롭 (`.zip .tar .gz .tgz .js .ts .html .css .json`)
-2. 고민: 강아지가 다리 꼬고 고민하며 말하는 동안 실제 업로드 진행 (칩에 %/조각 수 표시)
-3. 띠용: 대사와 업로드가 모두 끝나면 놀라며 결정
-4. 근거 화면: 단서 4개 → 결정 카드, 아래에 `좋아!` / `아니 다른거 할래`
-5. 만드는 중: 단계 체크리스트 (배포 API 대기)
+현재 로그인/프로젝트 목록 API가 없어서 프로젝트 토큰을 브라우저 `localStorage`에 최대 10개 저장한다. 이 토큰으로 해당 프로젝트에 접근할 수 있으므로 공유 컴퓨터에서는 기록을 삭제해야 한다. 히스토리 삭제는 브라우저 기록만 지우며 서버의 소스를 삭제하지 않는다.

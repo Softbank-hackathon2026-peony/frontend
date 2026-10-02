@@ -1,25 +1,19 @@
 import { useEffect } from 'react'
 import { FileIcon } from './Icons'
-import type { UploadRecord } from '../api/history'
+import type { SourceRecord } from '../api/history'
 
 type Props = {
   open: boolean
-  history: UploadRecord[]
+  history: SourceRecord[]
   onClose: () => void
-  onOpen: (rec: UploadRecord) => void
-  onDelete: (rec: UploadRecord) => void
-}
-
-const fmtSize = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(b / 1024))}KB`)
-const fmtDate = (iso: string) => {
-  const d = new Date(iso)
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  onOpen: (record: SourceRecord) => void
+  onDelete: (record: SourceRecord) => void
 }
 
 export function HistoryPanel({ open, history, onClose, onOpen, onDelete }: Props) {
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
@@ -29,29 +23,18 @@ export function HistoryPanel({ open, history, onClose, onOpen, onDelete }: Props
     <div className="drawer-root">
       <div className="drawer-back" onClick={onClose} aria-hidden="true" />
       <aside className="drawer" role="dialog" aria-modal="true" aria-label="히스토리">
-        <div className="drawer-head">
-          <h3>히스토리 <small>이 브라우저에 남은 기록</small></h3>
-          <button className="btn ghost small" type="button" onClick={onClose}>닫기</button>
-        </div>
-        {history.length === 0 ? (
-          <p className="drawer-empty">아직 올린 파일이 없어. 파일을 넣으면 여기에 쌓여.</p>
-        ) : (
+        <div className="drawer-head"><h3>히스토리 <small>이 브라우저에 남은 기록</small></h3><button className="btn ghost small" type="button" onClick={onClose}>닫기</button></div>
+        {history.length === 0 ? <p className="drawer-empty">아직 등록한 GitHub 소스가 없어.</p> : (
           <ul className="history">
-            {history.map((rec) => (
-              <li key={rec.uploadId}>
-                <FileIcon />
-                <div className="nm">
-                  <b>{rec.fileName}</b>
-                  <span>{fmtSize(rec.sizeBytes)} · {fmtDate(rec.uploadedAt)} · {rec.projectId}</span>
-                  <em className={rec.decision ? 'decided' : ''}>{rec.decision ? `${rec.decision}로 결정` : '아직 결정 전'}</em>
-                </div>
-                <button className="open" type="button" onClick={() => { onOpen(rec); onClose() }}>이어 보기</button>
-                <button className="del" type="button" aria-label="기록 지우기" onClick={() => onDelete(rec)}>지우기</button>
-              </li>
-            ))}
+            {history.map((record) => <li key={record.source.source_id}>
+              <FileIcon />
+              <div className="nm"><b>{record.projectName}</b><span>{record.source.repository_url}</span><em className={record.source.status === 'ready' ? 'decided' : ''}>{record.source.status === 'ready' ? 'S3 보관 완료' : record.source.status === 'failed' ? '실패' : '보관 중'}</em></div>
+              <button className="open" type="button" onClick={() => { onOpen(record); onClose() }}>열기</button>
+              <button className="del" type="button" aria-label="기록 지우기" onClick={() => onDelete(record)}>지우기</button>
+            </li>)}
           </ul>
         )}
-        <p className="note">서버에는 파일이 그대로 있어. 여기 기록은 이 브라우저에서만 보여.</p>
+        <p className="note">기록과 프로젝트 토큰은 이 브라우저에만 저장돼. 공유 컴퓨터라면 기록을 지워줘. 기록 삭제는 서버의 소스를 삭제하지 않아.</p>
       </aside>
     </div>
   )

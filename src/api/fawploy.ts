@@ -1,16 +1,19 @@
-// Fawploy 백엔드 API 클라이언트 (현재 구현 범위: 프로젝트 생성 + S3 멀티파트 업로드)
-// Base URL은 VITE_API_BASE_URL 로 바꿀 수 있다. project_token 은 메모리에만 두고 절대 저장/노출하지 않는다.
-
-const BASE = (import.meta.env.VITE_API_BASE_URL ?? 'https://fawploy.yyoungjin.com').replace(/\/$/, '')
+const BASE = (import.meta.env.VITE_API_BASE_URL ?? 'https://fawploy.teampeony.net').replace(/\/$/, '')
 const API = `${BASE}/api/v1`
 
-export const SUPPORTED_EXTENSIONS = ['.zip', '.tar', '.gz', '.tgz', '.js', '.ts', '.html', '.css', '.json'] as const
-
 export type Project = { project_id: string; project_token: string; name: string }
-export type UploadStart = { upload_id: string; part_size: number; total_parts: number }
-export type PartPresign = { upload_url: string; expires_in: number }
-export type UploadComplete = { project_id: string; upload_id: string; status: 'uploaded' }
-export type CompletedPart = { part_number: number; etag: string }
+export type SourceStatus = 'queued' | 'downloading' | 'ready' | 'failed'
+export type GitHubSource = {
+  source_id: string
+  status: SourceStatus
+  repository_url: string
+  ref: string
+  commit_sha: string
+  created_at?: string
+  updated_at?: string
+  s3_key?: string
+  error_message?: string
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public requestId?: string) {
@@ -19,50 +22,47 @@ export class ApiError extends Error {
   }
 }
 
-/** HTTP 상태를 사람이 읽을 수 있는 한 줄로 바꾼다 (문서의 대표 오류 표 기준). */
 export function describeApiError(err: unknown): string {
   if (err instanceof ApiError) {
-    const byStatus: Record<number, string> = {
-      400: '파트 번호가 잘못됐어요.',
-      404: '프로젝트 토큰이 맞지 않거나 업로드 작업이 없어요.',
-      409: '지금 업로드 상태에서는 할 수 없는 요청이에요.',
-      413: '파일이 S3 크기 한도를 넘었어요.',
-      415: '지원하지 않는 확장자예요.',
-      422: '요청값이 맞지 않거나 파트 정보가 실제 파일과 달라요.',
-      503: '서버 저장소(S3/DynamoDB) 작업이 실패했어요. 잠시 후 다시 시도해 주세요.',
-    }
-    return byStatus[err.status] ?? err.message
+    if (err.status === 404) return '공개 저장소나 커밋을 찾지 못했어요. 주소와 브랜치를 확인해 주세요.'
+    if (err.status === 502) return 'GitHub 연결에 실패했어요. 잠시 후 다시 시도해 주세요.'
+    if (err.status === 503) return 'GitHub 요청 제한 또는 저장소 오류가 있어요. 잠시 후 다시 시도해 주세요.'
+    return err.message
   }
   if (err instanceof Error) return err.message
-  return '알 수 없는 오류가 났어요.'
+  return '알 수 없는 오류가 발생했어요.'
 }
 
-type RequestOptions = { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown; token?: string; signal?: AbortSignal }
+type RequestOptions = { method?: 'GET' | 'POST'; body?: unknown; token?: string; signal?: AbortSignal }
 
 async function request<T>(path: string, { method = 'GET', body, token, signal }: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers['X-Project-Token'] = token
-  const res = await fetch(`${API}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal })
-  if (res.status === 204) return undefined as T
-  const json = (await res.json().catch(() => null)) as { data?: T; detail?: string; request_id?: string } | null
-  if (!res.ok) throw new ApiError(res.status, json?.detail ?? `HTTP ${res.status}`, json?.request_id)
-  return json?.data as T
+  const response = await fetch(`${API}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal })
+  const json = await response.json().catch(() => null) as { data?: T; detail?: string | { msg: string }[]; request_id?: string } | null
+  if (!response.ok) {
+    const detail = json?.detail
+    const message = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((item) => item.msg).join(', ') : `HTTP ${response.status}`
+    throw new ApiError(response.status, message, json?.request_id)
+  }
+  if (!json?.data) throw new Error('서버 응답 형식이 올바르지 않아요.')
+  return json.data
 }
 
-export const getStatus = () => fetch(`${BASE}/status`).then((r) => r.json() as Promise<{ status: string; service: string; timestamp: string }>)
+export async function getStatus(signal?: AbortSignal): Promise<{ status: string }> {
+  const response = await fetch(`${BASE}/status`, { signal })
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  return response.json()
+}
 
 export const createProject = (name: string, signal?: AbortSignal) =>
   request<Project>('/projects', { method: 'POST', body: { name }, signal })
 
-export const startUpload = (projectId: string, token: string, fileName: string, sizeBytes: number, signal?: AbortSignal) =>
-  request<UploadStart>(`/projects/${projectId}/uploads/presign`, { method: 'POST', token, body: { file_name: fileName, size_bytes: sizeBytes }, signal })
+export const createGitHubSource = (projectId: string, token: string, githubUrl: string, ref?: string, signal?: AbortSignal) =>
+  request<GitHubSource>(`/projects/${encodeURIComponent(projectId)}/sources/github`, {
+    method: 'POST', token, body: { github_url: githubUrl, ...(ref ? { ref } : {}) }, signal,
+  })
 
-export const presignPart = (projectId: string, token: string, uploadId: string, partNumber: number, signal?: AbortSignal) =>
-  request<PartPresign>(`/projects/${projectId}/uploads/${uploadId}/parts/${partNumber}/presign`, { token, signal })
-
-export const completeUpload = (projectId: string, token: string, uploadId: string, parts: CompletedPart[], signal?: AbortSignal) =>
-  request<UploadComplete>(`/projects/${projectId}/uploads/${uploadId}/complete`, { method: 'POST', token, body: { parts }, signal })
-
-export const abortUpload = (projectId: string, token: string, uploadId: string) =>
-  request<void>(`/projects/${projectId}/uploads/${uploadId}`, { method: 'DELETE', token })
+export const getGitHubSource = (projectId: string, token: string, sourceId: string, signal?: AbortSignal) =>
+  request<GitHubSource>(`/projects/${encodeURIComponent(projectId)}/sources/${encodeURIComponent(sourceId)}`, { token, signal })

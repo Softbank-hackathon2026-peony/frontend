@@ -1,75 +1,89 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PawIcon } from './components/Icons'
-import { Landing } from './screens/Landing'
+import { Landing, type SourceInput } from './screens/Landing'
 import { Thinking } from './screens/Thinking'
-import { Reason } from './screens/Reason'
-import { Build } from './screens/Build'
+import { SourceResult } from './screens/SourceResult'
 import { HistoryPanel } from './components/HistoryPanel'
-import { describeApiError, getStatus } from './api/fawploy'
-import { uploadProject, type UploadProgress, type UploadResult } from './api/upload'
-import { loadHistory, removeRecord, saveRecord, updateRecord, type UploadRecord } from './api/history'
+import { createGitHubSource, createProject, describeApiError, getGitHubSource, getStatus } from './api/fawploy'
+import { loadHistory, removeRecord, saveRecord, type SourceRecord } from './api/history'
 
-type Stage = { name: 'landing' } | { name: 'thinking'; file: File } | { name: 'reason'; rec: UploadRecord } | { name: 'build'; rec: UploadRecord; target: string }
+type Stage = { name: 'landing' } |
+  { name: 'working'; input: SourceInput; phase: 'creating' | 'registering' | 'error'; error: string | null } |
+  { name: 'result'; record: SourceRecord }
 
 function App() {
   const [stage, setStage] = useState<Stage>({ name: 'landing' })
-  const [history, setHistory] = useState<UploadRecord[]>(() => loadHistory())
-  const [progress, setProgress] = useState<UploadProgress | null>(null)
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [history, setHistory] = useState<SourceRecord[]>(loadHistory)
   const [api, setApi] = useState<'checking' | 'ok' | 'down'>('checking')
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [statusError, setStatusError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const pendingRef = useRef<UploadRecord | null>(null)
 
   useEffect(() => {
-    getStatus().then((s) => setApi(s.status === 'ok' ? 'ok' : 'down')).catch(() => setApi('down'))
+    const controller = new AbortController()
+    getStatus(controller.signal).then((result) => setApi(result.status === 'ok' ? 'ok' : 'down')).catch(() => {
+      if (!controller.signal.aborted) setApi('down')
+    })
+    return () => controller.abort()
   }, [])
 
-  const startUpload = useCallback((file: File) => {
+  const start = async (input: SourceInput) => {
     abortRef.current?.abort()
-    const ac = new AbortController()
-    abortRef.current = ac
-    setProgress(null); setUploadResult(null); setUploadError(null); pendingRef.current = null
-    uploadProject(file, { onProgress: setProgress, signal: ac.signal })
-      .then((res) => {
-        if (ac.signal.aborted) return
-        setUploadResult(res)
-      })
-      .catch((err) => {
-        if (ac.signal.aborted) return
-        setUploadError(describeApiError(err))
-      })
-  }, [])
-
-  // 업로드 성공 시 기록 저장 (토큰은 uploadProject 안에서만 쓰고 여기서는 기록용으로 한 번 더 받는다)
-  useEffect(() => {
-    if (!uploadResult || stage.name !== 'thinking') return
-    const rec: UploadRecord = {
-      projectId: uploadResult.projectId,
-      projectToken: uploadResult.projectToken,
-      uploadId: uploadResult.uploadId,
-      projectName: uploadResult.projectName,
-      fileName: stage.file.name,
-      sizeBytes: stage.file.size,
-      uploadedAt: new Date().toISOString(),
+    const controller = new AbortController()
+    abortRef.current = controller
+    setStage({ name: 'working', input, phase: 'creating', error: null })
+    try {
+      const project = await createProject(input.projectName, controller.signal)
+      if (controller.signal.aborted) return
+      setStage({ name: 'working', input, phase: 'registering', error: null })
+      const source = await createGitHubSource(project.project_id, project.project_token, input.githubUrl, input.ref || undefined, controller.signal)
+      if (controller.signal.aborted) return
+      const record: SourceRecord = { projectId: project.project_id, projectToken: project.project_token, projectName: project.name, source, createdAt: new Date().toISOString() }
+      saveRecord(record)
+      setHistory(loadHistory())
+      setStatusError(null)
+      setStage({ name: 'result', record })
+    } catch (error) {
+      if (!controller.signal.aborted) setStage({ name: 'working', input, phase: 'error', error: describeApiError(error) })
     }
-    pendingRef.current = rec
-    saveRecord(rec)
-    setHistory(loadHistory())
-  }, [uploadResult, stage])
-
-  const onFile = (file: File) => { setStage({ name: 'thinking', file }); startUpload(file) }
-  const cancelToLanding = () => { abortRef.current?.abort(); setStage({ name: 'landing' }); setHistory(loadHistory()) }
-  const onThinkingFinished = useCallback(() => {
-    const rec = pendingRef.current
-    if (rec) setStage({ name: 'reason', rec })
-  }, [])
-  const decide = (rec: UploadRecord, target: string) => {
-    updateRecord(rec.uploadId, { decision: target })
-    setHistory(loadHistory())
-    setStage({ name: 'build', rec: { ...rec, decision: target }, target })
   }
+
+  const leave = () => {
+    abortRef.current?.abort()
+    setRefreshing(false)
+    setStatusError(null)
+    setStage({ name: 'landing' })
+  }
+
+  const refresh = async (record: SourceRecord, signal?: AbortSignal) => {
+    setRefreshing(true)
+    try {
+      const source = await getGitHubSource(record.projectId, record.projectToken, record.source.source_id, signal)
+      if (signal?.aborted) return
+      const updated = { ...record, source }
+      saveRecord(updated)
+      setHistory(loadHistory())
+      setStage((current) => current.name === 'result' && current.record.source.source_id === source.source_id ? { name: 'result', record: updated } : current)
+      setStatusError(null)
+    } catch (error) {
+      if (!signal?.aborted) setStatusError(describeApiError(error))
+    } finally {
+      if (!signal?.aborted) setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    if (stage.name !== 'result' || !['queued', 'downloading'].includes(stage.record.source.status)) return
+    const controller = new AbortController()
+    let inFlight = false
+    const timer = window.setInterval(() => {
+      if (inFlight) return
+      inFlight = true
+      void refresh(stage.record, controller.signal).finally(() => { inFlight = false })
+    }, 2500)
+    return () => { window.clearInterval(timer); controller.abort() }
+  }, [stage])
 
   return (
     <main className="app">
@@ -79,38 +93,12 @@ function App() {
         <span className={`api ${api}`} title="백엔드 상태"><i />{api === 'ok' ? '서버 연결됨' : api === 'down' ? '서버 응답 없음' : '서버 확인 중'}</span>
         <button className="histbtn" type="button" onClick={() => setHistoryOpen(true)} aria-haspopup="dialog">히스토리{history.length > 0 && <b>{history.length}</b>}</button>
       </div>
-
-      {stage.name === 'landing' && (
-        <Landing onFile={onFile} historyCount={history.length} onOpenHistory={() => setHistoryOpen(true)} />
-      )}
-      {stage.name === 'thinking' && (
-        <Thinking
-          file={stage.file}
-          progress={progress}
-          uploadDone={!!uploadResult}
-          uploadError={uploadError}
-          onRetry={() => startUpload(stage.file)}
-          onCancel={cancelToLanding}
-          onFinished={onThinkingFinished}
-        />
-      )}
-      {stage.name === 'reason' && (
-        <Reason
-          fileName={stage.rec.fileName}
-          projectId={stage.rec.projectId}
-          onYes={() => decide(stage.rec, 'AWS Lambda')}
-          onPick={(target) => decide(stage.rec, target)}
-          onRestart={cancelToLanding}
-        />
-      )}
-      <HistoryPanel
-        open={historyOpen}
-        history={history}
-        onClose={() => setHistoryOpen(false)}
-        onOpen={(rec) => { abortRef.current?.abort(); setStage(rec.decision ? { name: 'build', rec, target: rec.decision } : { name: 'reason', rec }) }}
-        onDelete={(rec) => { removeRecord(rec.uploadId); setHistory(loadHistory()) }}
-      />
-      {stage.name === 'build' && <Build target={stage.target} projectId={stage.rec.projectId} uploadId={stage.rec.uploadId} onRestart={cancelToLanding} />}
+      {stage.name === 'landing' && <Landing onSubmit={(input) => void start(input)} historyCount={history.length} onOpenHistory={() => setHistoryOpen(true)} />}
+      {stage.name === 'working' && <Thinking repositoryUrl={stage.input.githubUrl} phase={stage.phase} error={stage.error} onRetry={() => void start(stage.input)} onCancel={leave} />}
+      {stage.name === 'result' && <SourceResult record={stage.record} onRefresh={() => void refresh(stage.record)} refreshing={refreshing} error={statusError} onRestart={leave} />}
+      <HistoryPanel open={historyOpen} history={history} onClose={() => setHistoryOpen(false)} onOpen={(record) => {
+        abortRef.current?.abort(); setStatusError(null); setStage({ name: 'result', record })
+      }} onDelete={(record) => { removeRecord(record.source.source_id); setHistory(loadHistory()) }} />
     </main>
   )
 }
