@@ -7,6 +7,11 @@ export type SourceRecord = {
   projectName: string
   source: GitHubSource
   createdAt: string
+  analysisId?: string
+  deploymentId?: string
+  decidedTarget?: string
+  decidedLabel?: string
+  mock?: boolean // 목 모드에서 만든 기록이면 이어 볼 때도 목으로
 }
 
 const KEY = 'pawploy.github-sources.v1'
@@ -32,4 +37,10 @@ export function saveRecord(record: SourceRecord) {
 }
 export function removeRecord(sourceId: string) {
   write(read().filter((item) => item.source.source_id !== sourceId))
+}
+/** 기록이 어느 단계까지 갔는지 */
+export function recordStage(r: SourceRecord): 'source' | 'analysis' | 'deployment' {
+  if (r.deploymentId) return 'deployment'
+  if (r.analysisId) return 'analysis'
+  return 'source'
 }
