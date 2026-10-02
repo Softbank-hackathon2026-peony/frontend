@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Dog } from '../components/Dog'
 import { BoxIcon, ChipIcon, ClockIcon, CloudIcon } from '../components/Icons'
 import type { Analysis, Cost } from '../api/fawploy'
@@ -32,7 +33,8 @@ function CostLine({ cost }: { cost?: Cost }) {
   )
 }
 
-export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRestart }: Props) {
+export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevise, onRestart }: Props) {
+  const [message, setMessage] = useState('')
   const rec = analysis.recommendation!
   const canDeploy = rec.supported !== false
   const clues = rec.clues.slice(0, 3)
@@ -102,6 +104,11 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRest
       {error && <p className="err" role="alert">{error}</p>}
 
       <div className="choice">
+        <div className="revise">
+          <label htmlFor="revision">원하는 방향이 있으면 말해줘</label>
+          <textarea id="revision" rows={2} maxLength={2000} placeholder="예: 항상 켜져 있어야 하고 월 비용은 10달러 이하로 해줘" value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} />
+          <button className="btn ghost" type="button" disabled={!message.trim() || busy} onClick={() => { onRevise(message.trim()); setMessage('') }}>{busy ? '다시 분석하는 중…' : '이 조건으로 다시 분석'}</button>
+        </div>
         <p className="lead">이 추천으로 배포할까?</p>
         <button className="btn primary big" type="button" disabled={busy || !canDeploy} onClick={() => onApprove(rec.target)}>{busy ? '시작하는 중…' : `${rec.label}로 배포하기`}</button>
         <button className="btn ghost" type="button" disabled={busy} onClick={onRestart}>처음부터 다시</button>
