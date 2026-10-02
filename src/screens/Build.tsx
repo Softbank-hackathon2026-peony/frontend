@@ -26,7 +26,7 @@ export function Build({ deployment, label, error, onRestart }: Props) {
   return (
     <section className="build" aria-live="polite">
       <Dog pose="eureka" still />
-      <h2>{failed ? <><em>{label}</em> 배포가 멈췄어</> : <><em>{label}</em>로 만드는 중…</>}</h2>
+      <h2>{failed ? <><span className="nowrap"><em>{label}</em></span> 배포가 멈췄어</> : <><span className="nowrap"><em>{label}</em>로</span> 만드는 중…</>}</h2>
       <ul className="steps">
         {ORDER.map((s, i) => {
           const state = failed && i === idx ? 'failed' : i < idx ? 'done' : i === idx ? 'doing' : ''
