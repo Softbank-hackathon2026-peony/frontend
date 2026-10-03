@@ -149,7 +149,7 @@ function App() {
       loop(async () => {
         const analysis = await api.getAnalysis(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
-        if (isAnalysisReady(analysis)) { setStage({ name: 'reason', record: rec, analysis, busy: false, error: null }); return true }
+        if (isAnalysisReady(analysis)) { setStage({ name: 'working', input: stage.input, phase: 'analyzing', error: null, record: rec, analysis }); return true }
         if (analysis.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: analysis.error_message || '분석에 실패했어요.', record: rec, analysis: null }); return true }
         return false
       }, POLL.analysis, LIMIT.analysis)

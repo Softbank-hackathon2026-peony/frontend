@@ -32,9 +32,9 @@ export function Deployed({ deployment, label, stopping, error, onStop, onRestart
 
   return (
     <section className="deployed" aria-live="polite">
-      <Dog pose="eureka" still />
+      <Dog pose={alive ? "happy" : "think"} still />
       <div className={`stpill ${stClass}`}>{stLabel}</div>
-      <h2>{alive ? <>다 됐어! <em>{label}</em>에 올라갔어</> : deployment.status === 'destroyed' ? '배포를 정리했어' : '배포가 실패했어'}</h2>
+      <h2>{alive ? <>다 됐어! <span className="nowrap"><em>{label}</em>에</span> 올라갔어</> : deployment.status === 'destroyed' ? '배포를 정리했어' : '배포가 실패했어'}</h2>
       {alive && deployment.url && (
         <div className="urlbox">
           <a href={deployment.url} target="_blank" rel="noreferrer">{deployment.url}</a>
