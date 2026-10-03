@@ -7,9 +7,9 @@
   --pink: #F27DBF; --green: #8CC63F; --purple: #8B5CF6; --blue: #3D6BFF; --orange: #F5A623; --link: #2456E0;
   --good: #4E9A2A; --warn: #C58A00; --bad: #D8407A;
   --fur: #E8A64B; --fur-dark: #B9732E; --fur-light: #F9DFB0; --ink: #2B1D12;
-  --display: 'Jua', 'Noto Sans KR', system-ui, sans-serif;
-  --body: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-  --hand: 'Gaegu', 'Noto Sans KR', cursive, sans-serif;
+  --display: 'Mochiy Pop One', 'Noto Sans JP', system-ui, sans-serif;
+  --body: 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+  --hand: 'Yomogi', 'Noto Sans JP', cursive, sans-serif;
   --shadow: 0 18px 40px -20px rgba(0, 0, 0, .28);
   --hl-a: 12%; --hl-b: 88%;   /* 제목 마커 띠 */
   --hl2-a: 50%; --hl2-b: 92%; /* 본문 형광펜 밑줄 */

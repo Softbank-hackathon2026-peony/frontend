@@ -28,7 +28,7 @@ export async function startAnalysis(_projectId: string, _token: string, sourceId
 export async function getAnalysis(_projectId: string, _token: string, analysisId: string): Promise<Analysis> {
   await wait(200)
   const a = load().analyses[analysisId]
-  if (!a) return { analysis_id: analysisId, status: 'failed', error_message: '목 모드 기록이 없어요. 처음부터 다시 시작해 주세요.' }
+  if (!a) return { analysis_id: analysisId, status: 'failed', error_message: 'モックモードの記録がありません。最初からやり直してください。' }
   const t = Date.now() - a.startedAt
   if (t < 1500) return { analysis_id: analysisId, status: 'queued' }
   if (t < ANALYZE_MS) return { analysis_id: analysisId, status: 'running' }
@@ -37,14 +37,14 @@ export async function getAnalysis(_projectId: string, _token: string, analysisId
     // 수정 요청을 반영한 척: 2순위를 1순위로 올리고 이유에 요청을 남긴다
     const [first, second, ...rest] = rec.candidates
     if (second) {
-      rec.candidates = [{ ...second, rank: 1, verdict: '추천', fit: Math.max(second.fit, 90) }, { ...first, rank: 2, verdict: '적합' }, ...rest]
+      rec.candidates = [{ ...second, rank: 1, verdict: 'おすすめ', fit: Math.max(second.fit, 90) }, { ...first, rank: 2, verdict: '適合' }, ...rest]
       rec.target = second.target; rec.label = second.label; rec.cloud = second.cloud
-      rec.reason = `수정 요청("${a.revision}")을 반영해 ${second.label}로 바꿨어요. ` + rec.reason
+      rec.reason = `修正リクエスト(「${a.revision}」)を反映して ${second.label} に変更しました。` + rec.reason
       rec.cost = second.cost ?? rec.cost
       rec.permissions = second.permissions ?? rec.permissions
     }
   }
-  return { analysis_id: analysisId, status: 'ready', recommendation: rec, validation_notes: ['목 모드: agentcore 샘플 응답을 그대로 보여 주고 있어요.'] }
+  return { analysis_id: analysisId, status: 'ready', recommendation: rec, validation_notes: ['モックモード: agentcore のサンプル応答をそのまま表示しています。'] }
 }
 
 export async function decideAnalysis(_projectId: string, _token: string, analysisId: string, decision: Decision): Promise<DecisionResult> {
@@ -67,7 +67,7 @@ const TIMELINE: [string, number][] = [['build', 4], ['fix(1/3)', 3], ['build', 3
 export async function getDeployment(_projectId: string, _token: string, deploymentId: string): Promise<Deployment> {
   await wait(200)
   const d = load().deployments[deploymentId]
-  if (!d) return { deployment_id: deploymentId, status: 'failed', reason: '목 모드 기록이 없어요. 처음부터 다시 시작해 주세요.' }
+  if (!d) return { deployment_id: deploymentId, status: 'failed', reason: 'モックモードの記録がありません。最初からやり直してください。' }
   if (d.stopped) return { deployment_id: deploymentId, status: 'destroyed', target: d.target, label: d.label }
   let t = (Date.now() - d.startedAt) / 1000
   for (const [step, dur] of TIMELINE) {
@@ -105,7 +105,7 @@ export async function createGitHubSource(_projectId: string, _token: string, git
 export async function getGitHubSource(_projectId: string, _token: string, sourceId: string): Promise<GitHubSource> {
   await wait(150)
   const m = loadS()[sourceId]
-  if (!m) return { source_id: sourceId, status: 'failed', repository_url: '', ref: '', commit_sha: '', error_message: '목 모드 기록이 없어요.' }
+  if (!m) return { source_id: sourceId, status: 'failed', repository_url: '', ref: '', commit_sha: '', error_message: 'モックモードの記録がありません。' }
   const t = Date.now() - m.startedAt
   const status = t < 800 ? 'queued' : t < 2500 ? 'downloading' : 'ready'
   return { source_id: sourceId, status, repository_url: m.url, ref: m.ref, commit_sha: 'mock0000deadbeef', s3_key: status === 'ready' ? `mock/${sourceId}.tar.gz` : undefined }

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Dog } from '../components/Dog'
 import { BoxIcon, ChipIcon, ClockIcon, CloudIcon } from '../components/Icons'
 import type { Analysis, Candidate, Cost } from '../api/fawploy'
-import { euro } from '../lib/particle'
 
 type Props = {
   analysis: Analysis
@@ -16,7 +15,8 @@ type Props = {
 
 const ICONS = [CloudIcon, ClockIcon, ChipIcon, BoxIcon]
 const COLORS = ['var(--blue)', 'var(--orange)', 'var(--purple)', 'var(--green)', 'var(--pink)']
-const verdictClass = (v: string) => (/추천|적합|좋음/.test(v) ? 'v-good' : /낭비|불가|부적합/.test(v) ? 'v-bad' : 'v-warn')
+// '부적합'·'不適合' 안에 '적합'·'適合'이 들어 있어서 나쁜 쪽을 먼저 본다
+const verdictClass = (v: string) => (/낭비|불가|부적합|無駄|不可|不適合/.test(v) ? 'v-bad' : /추천|적합|좋음|おすすめ|推奨|適合|最適/.test(v) ? 'v-good' : 'v-warn')
 const cloudLabel = (c: string) => (c === 'gcp' ? 'GCP' : c === 'aws' ? 'AWS' : c.toUpperCase())
 
 function CostLine({ cost }: { cost?: Cost }) {
@@ -24,13 +24,13 @@ function CostLine({ cost }: { cost?: Cost }) {
   const cur = cost.currency ?? 'USD'
   const fmt = (n: number | null | undefined) => (n == null ? null : `${cur === 'USD' ? '$' : ''}${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}${cur === 'USD' ? '' : ' ' + cur}`)
   const m = fmt(cost.monthly), t = fmt(cost.test_1h)
-  if (m == null && t == null) return <div className="cost"><b>예상 비용</b><span className="pending">{cost.note || '단가 확인 전'}</span></div>
+  if (m == null && t == null) return <div className="cost"><b>想定コスト</b><span className="pending">{cost.note || '単価確認前'}</span></div>
   return (
     <div className="cost">
-      <b>예상 비용</b>
-      {m != null && <span>월 {m}</span>}
-      {t != null && <span>테스트 1시간 {t}</span>}
-      {cost.assumptions && <small>가정: {Object.entries(cost.assumptions).map(([k, v]) => `${k} ${v}`).join(' · ')}</small>}
+      <b>想定コスト</b>
+      {m != null && <span>月 {m}</span>}
+      {t != null && <span>テスト1時間 {t}</span>}
+      {cost.assumptions && <small>前提: {Object.entries(cost.assumptions).map(([k, v]) => `${k} ${v}`).join(' · ')}</small>}
     </div>
   )
 }
@@ -44,24 +44,24 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
   const canDeploy = rec.supported !== false
 
   return (
-    <section className="reason" aria-label="선택 이유">
+    <section className="reason" aria-label="選んだ理由">
       <div className="rhead">
         <Dog pose="happy" still className="minidog" />
         <div>
-          <div className="eyebrow">분석 결과 · <span className="raw">{repositoryUrl.replace(/^https:\/\/github\.com\//, '')}</span>{rec.commit_sha && <> · <code>{rec.commit_sha.slice(0, 7)}</code></>}{rec.model_id && <> · <code>{rec.model_id}</code></>}</div>
-          <h2>그래서 <span className="nowrap"><em>{rec.label}</em>{euro(rec.label).slice(rec.label.length)}</span> 배포하기로 했어</h2>
+          <div className="eyebrow">分析結果 · <span className="raw">{repositoryUrl.replace(/^https:\/\/github\.com\//, '')}</span>{rec.commit_sha && <> · <code>{rec.commit_sha.slice(0, 7)}</code></>}{rec.model_id && <> · <code>{rec.model_id}</code></>}</div>
+          <h2>だから <span className="nowrap"><em>{rec.label}</em>に</span>デプロイすることにしたよ</h2>
           <p>{rec.summary}</p>
         </div>
       </div>
 
       {!canDeploy && (
         <div className="warnbox" role="alert">
-          <b>이 프로젝트는 아직 자동 배포가 안 돼.</b>
+          <b>このプロジェクトはまだ自動デプロイできないんだ。</b>
           <ul>{rec.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
         </div>
       )}
       {canDeploy && rec.warnings.length > 0 && (
-        <div className="warnbox soft"><b>미리 알아둘 것</b><ul>{rec.warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>
+        <div className="warnbox soft"><b>先に知っておいてほしいこと</b><ul>{rec.warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>
       )}
 
       <div className="flow">
@@ -72,7 +72,7 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
               <div className="clue" key={`${c.file}-${c.line}-${i}`} style={{ '--c': COLORS[i % COLORS.length], '--i': i } as React.CSSProperties}>
                 <Icon className="ico" />
                 <div className="txt">
-                  <div className="file">{c.file}{c.line != null && ` · ${c.line}번째 줄`}</div>
+                  <div className="file">{c.file}{c.line != null && ` · ${c.line}行目`}</div>
                   <div className="find"><mark>{c.finding}</mark></div>
                   <div className="plain">{c.plain}</div>
                 </div>
@@ -88,18 +88,18 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
           </svg>
         </div>
         <div className="decide">
-          <div className="eyebrow">결정 · {cloudLabel(rec.cloud)}{rec.size && ` · ${rec.size}`}</div>
+          <div className="eyebrow">決定 · {cloudLabel(rec.cloud)}{rec.size && ` · ${rec.size}`}</div>
           <h3>{rec.label}</h3>
           <div className="why">{rec.reason}</div>
           {(rec.container_port || rec.health_path) && (
-            <div className="deployspec"><b>배포 설정</b><span>{rec.container_port ? `포트 ${rec.container_port}` : ''}{rec.container_port && rec.health_path ? ' · ' : ''}{rec.health_path ? `헬스체크 ${rec.health_path}` : ''}</span></div>
+            <div className="deployspec"><b>デプロイ設定</b><span>{rec.container_port ? `ポート ${rec.container_port}` : ''}{rec.container_port && rec.health_path ? ' · ' : ''}{rec.health_path ? `ヘルスチェック ${rec.health_path}` : ''}</span></div>
           )}
           <CostLine cost={rec.cost} />
           {rec.permissions.length > 0 && (
-            <div className="perm"><b>배포된 앱이 받는 권한</b><ul>{rec.permissions.map((p) => <li key={p}>{p}</li>)}</ul></div>
+            <div className="perm"><b>デプロイしたアプリに付く権限</b><ul>{rec.permissions.map((p) => <li key={p}>{p}</li>)}</ul></div>
           )}
           {rec.required_secrets.length > 0 && (
-            <div className="secrets"><b>이 값은 직접 넣어야 해요</b><ul>{rec.required_secrets.map((s) => <li key={s}><code>{s}</code></li>)}</ul></div>
+            <div className="secrets"><b>この値は自分で入れてね</b><ul>{rec.required_secrets.map((s) => <li key={s}><code>{s}</code></li>)}</ul></div>
           )}
         </div>
       </div>
@@ -108,14 +108,14 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
 
       {!showAlts ? (
         <div className="choice">
-          <p className="lead">이대로 갈까?</p>
-          <button className="btn primary big" type="button" disabled={busy || !canDeploy} onClick={() => onApprove(rec.target)}>{busy ? '시작하는 중…' : '좋아!'}</button>
-          <button className="btn ghost" type="button" disabled={busy} onClick={() => setShowAlts(true)}>아니 다른거 할래</button>
+          <p className="lead">これでいく?</p>
+          <button className="btn primary big" type="button" disabled={busy || !canDeploy} onClick={() => onApprove(rec.target)}>{busy ? '開始中…' : 'いいね!'}</button>
+          <button className="btn ghost" type="button" disabled={busy} onClick={() => setShowAlts(true)}>ううん、別のにする</button>
         </div>
       ) : (
         <div className="alts">
-          <h4>그럼 어디에 올릴까?</h4>
-          <p className="sub">멍멍이가 비교한 {candidates.length}가지야. 하나 고르거나, 원하는 조건을 적어 주면 다시 분석할게.</p>
+          <h4>じゃあ、どこに載せる?</h4>
+          <p className="sub">わんこが比べた{candidates.length}つの候補だよ。1つ選ぶか、希望の条件を書いてくれたらもう一度分析するね。</p>
           <div className="altgrid">
             {candidates.map((a) => (
               <button
@@ -127,24 +127,24 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
                 onClick={() => setChosen(a)}
                 aria-pressed={chosen?.target === a.target}
               >
-                <div className="name"><span className="rank">{a.rank}</span>{a.label} <span className="cloud">{cloudLabel(a.cloud)}</span><span className={`verdict ${verdictClass(a.verdict)}`}>{a.deployable ? a.verdict : '비교용'}</span></div>
+                <div className="name"><span className="rank">{a.rank}</span>{a.label} <span className="cloud">{cloudLabel(a.cloud)}</span><span className={`verdict ${verdictClass(a.verdict)}`}>{a.deployable ? a.verdict : '比較用'}</span></div>
                 <p>{a.why}</p>
                 {a.size_spec && <p className="spec">{a.size_spec}</p>}
-                <div className="meter"><span>적합도</span><div className="bar"><i style={{ '--w': `${a.fit}%` } as React.CSSProperties} /></div><span>{a.fit}%</span></div>
+                <div className="meter"><span>適合度</span><div className="bar"><i style={{ '--w': `${a.fit}%` } as React.CSSProperties} /></div><span>{a.fit}%</span></div>
                 <CostLine cost={a.cost} />
-                {!a.deployable && <p className="spec">지금은 배포 불가 · 비교용으로만 보여 줘</p>}
+                {!a.deployable && <p className="spec">今はデプロイ不可・比較用に表示してるだけだよ</p>}
               </button>
             ))}
           </div>
           <div className="revise">
-            <label htmlFor="revision">또는 조건을 말해 줘</label>
-            <textarea id="revision" rows={2} maxLength={500} placeholder="예: 항상 켜져 있어야 해 / GCP 로 가고 싶어 / 월 5달러 넘기지 마" value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} />
+            <label htmlFor="revision">または条件を教えて</label>
+            <textarea id="revision" rows={2} maxLength={500} placeholder="例: ずっと動いててほしい / GCP にしたい / 月5ドル以内で" value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} />
           </div>
           <div className="altfoot">
-            <button className="btn dark" type="button" disabled={!chosen || busy} onClick={() => chosen && onApprove(chosen.target)}>{chosen ? `${chosen.label}로 만들기` : '이걸로 만들기'}</button>
-            <button className="btn primary" type="button" disabled={!message.trim() || busy} onClick={() => onRevise(message.trim())}>{busy ? '보내는 중…' : '이 조건으로 다시 분석'}</button>
-            <button className="btn ghost" type="button" disabled={busy} onClick={onRestart}>처음부터 다시</button>
-            <span className="note">{chosen ? (chosen.rank === 1 ? '멍멍이 추천이랑 같아!' : '멍멍이 추천은 아니지만 네 선택을 존중할게') : '카드를 고르거나 조건을 적어 줘'}</span>
+            <button className="btn dark" type="button" disabled={!chosen || busy} onClick={() => chosen && onApprove(chosen.target)}>{chosen ? `${chosen.label}で作る` : 'これで作る'}</button>
+            <button className="btn primary" type="button" disabled={!message.trim() || busy} onClick={() => onRevise(message.trim())}>{busy ? '送信中…' : 'この条件で再分析'}</button>
+            <button className="btn ghost" type="button" disabled={busy} onClick={onRestart}>最初からやり直す</button>
+            <span className="note">{chosen ? (chosen.rank === 1 ? 'わんこのおすすめと同じだ!' : 'わんこのおすすめじゃないけど、きみの選択を尊重するよ') : 'カードを選ぶか、条件を書いてね'}</span>
           </div>
         </div>
       )}

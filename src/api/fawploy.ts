@@ -104,14 +104,14 @@ export class ApiError extends Error {
 
 export function describeApiError(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.status === 404) return '요청한 프로젝트나 작업을 찾지 못했어요. 잠시 후 다시 확인해 주세요.'
-    if (err.status === 409) return '지금 상태에서는 할 수 없는 요청이에요. 잠시 후 다시 시도해 주세요.'
-    if (err.status === 502) return '외부 서비스 또는 배포 작업에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'
-    if (err.status === 503) return '서비스가 일시적으로 준비되지 않았어요. 잠시 후 다시 시도해 주세요.'
+    if (err.status === 404) return '指定したプロジェクトや作業が見つかりませんでした。しばらくしてから再度ご確認ください。'
+    if (err.status === 409) return '今の状態ではできないリクエストです。しばらくしてから再度お試しください。'
+    if (err.status === 502) return '外部サービスまたはデプロイ処理に接続できませんでした。しばらくしてから再度お試しください。'
+    if (err.status === 503) return 'サービスが一時的に利用できません。しばらくしてから再度お試しください。'
     return err.message
   }
   if (err instanceof Error) return err.message
-  return '알 수 없는 오류가 발생했어요.'
+  return '不明なエラーが発生しました。'
 }
 
 type RequestOptions = { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown; token?: string; signal?: AbortSignal }
@@ -128,7 +128,7 @@ async function request<T>(path: string, { method = 'GET', body, token, signal }:
     const message = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((item) => item.msg).join(', ') : `HTTP ${response.status}`
     throw new ApiError(response.status, message, json?.request_id)
   }
-  if (!json?.data) throw new Error('서버 응답 형식이 올바르지 않아요.')
+  if (!json?.data) throw new Error('サーバーの応答形式が正しくありません。')
   return json.data
 }
 

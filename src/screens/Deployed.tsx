@@ -5,7 +5,7 @@ import type { Deployment } from '../api/fawploy'
 type Props = { deployment: Deployment; label: string; stopping: boolean; error: string | null; onStop: () => void; onRestart: () => void }
 
 const STATUS: Record<string, [string, string]> = {
-  running: ['실행 중', 'ok'], unhealthy: ['응답 없음', 'warn'], failed: ['실패', 'bad'], destroyed: ['종료됨', 'off'],
+  running: ['実行中', 'ok'], unhealthy: ['応答なし', 'warn'], failed: ['失敗', 'bad'], destroyed: ['終了済み', 'off'],
 }
 function remain(iso: string | null | undefined, now: number) {
   if (!iso) return null
@@ -34,32 +34,32 @@ export function Deployed({ deployment, label, stopping, error, onStop, onRestart
     <section className="deployed" aria-live="polite">
       <Dog pose={alive ? "happy" : "think"} still />
       <div className={`stpill ${stClass}`}>{stLabel}</div>
-      <h2>{alive ? <>다 됐어! <span className="nowrap"><em>{label}</em>에</span> 올라갔어</> : deployment.status === 'destroyed' ? '배포를 정리했어' : '배포가 실패했어'}</h2>
+      <h2>{alive ? <>できた! <span className="nowrap"><em>{label}</em>に</span>載ったよ</> : deployment.status === 'destroyed' ? 'デプロイを片付けたよ' : 'デプロイに失敗しちゃった'}</h2>
       {alive && deployment.url && (
         <div className="urlbox">
           <a href={deployment.url} target="_blank" rel="noreferrer">{deployment.url}</a>
           <div className="urlbtns">
-            <a className="btn primary small" href={deployment.url} target="_blank" rel="noreferrer">열기</a>
-            <button className="btn ghost small" type="button" onClick={copy}>{copied ? '복사됨' : '복사'}</button>
+            <a className="btn primary small" href={deployment.url} target="_blank" rel="noreferrer">開く</a>
+            <button className="btn ghost small" type="button" onClick={copy}>{copied ? 'コピーした' : 'コピー'}</button>
           </div>
         </div>
       )}
       {alive && left && (
-        <div className="countdown"><span>남은 시간</span><b>{left}</b><small>1시간 뒤 자동으로 삭제돼</small></div>
+        <div className="countdown"><span>残り時間</span><b>{left}</b><small>1時間後に自動で削除されるよ</small></div>
       )}
-      {deployment.status === 'unhealthy' && <p className="note">앱이 응답하지 않아. 잠시 뒤 다시 확인하거나 지금 종료할 수 있어.</p>}
+      {deployment.status === 'unhealthy' && <p className="note">アプリが応答しないよ。少し待ってから確認するか、今すぐ終了できるよ。</p>}
       {deployment.reason && !alive && <p className="err">{deployment.reason}</p>}
       {error && <p className="err" role="alert">{error}</p>}
       <div className="result-actions">
-        {alive && !confirm && <button className="btn ghost" type="button" disabled={stopping} onClick={() => setConfirm(true)}>지금 종료</button>}
+        {alive && !confirm && <button className="btn ghost" type="button" disabled={stopping} onClick={() => setConfirm(true)}>今すぐ終了</button>}
         {alive && confirm && (
           <>
-            <span className="note">정말 종료할까? 리소스가 바로 삭제돼.</span>
-            <button className="btn dark" type="button" disabled={stopping} onClick={onStop}>{stopping ? '종료 중…' : '네, 종료'}</button>
-            <button className="btn ghost" type="button" disabled={stopping} onClick={() => setConfirm(false)}>아니</button>
+            <span className="note">本当に終了する? リソースはすぐ削除されるよ。</span>
+            <button className="btn dark" type="button" disabled={stopping} onClick={onStop}>{stopping ? '終了中…' : 'うん、終了'}</button>
+            <button className="btn ghost" type="button" disabled={stopping} onClick={() => setConfirm(false)}>やめとく</button>
           </>
         )}
-        <button className="btn ghost" type="button" onClick={onRestart}>다른 저장소 배포</button>
+        <button className="btn ghost" type="button" onClick={onRestart}>別のリポジトリをデプロイ</button>
       </div>
       <div className="ids"><span>deployment: {deployment.deployment_id}</span></div>
     </section>
