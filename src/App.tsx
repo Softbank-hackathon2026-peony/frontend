@@ -164,11 +164,18 @@ function App() {
         return d.status === 'failed' || d.status === 'destroyed'
       }, POLL.deploy, LIMIT.deploy)
     }
-    if (stage.name === 'deployed' && stage.deployment.status !== 'destroyed' && stage.deployment.status !== 'failed' && !stage.stopping) {
+    // URL이 발급된 순간 실제 서비스가 접속 가능한 배포 완료 상태다.
+    // 백엔드가 최종 상태 반영 전에 status=deploying을 잠시 유지할 수 있으므로
+    // status만 보고 계속 polling하지 않는다.
+    if (stage.name === 'deployed' && !isDeployed(stage.deployment) && stage.deployment.status !== 'destroyed' && stage.deployment.status !== 'failed' && !stage.stopping) {
       const rec = stage.record, id = stage.deployment.deployment_id
       loop(async () => {
         const d = await api.getDeployment(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
+        if (isDeployed(d)) {
+          setStage((s) => (s.name === 'deployed' && !s.stopping ? { ...s, deployment: d } : s))
+          return true
+        }
         setStage((s) => (s.name === 'deployed' && !s.stopping ? { ...s, deployment: d } : s))
         return d.status === 'destroyed' || d.status === 'failed'
       }, POLL.deployed)
