@@ -2,13 +2,58 @@
 // 눈동자 확대 기준점이 그림 전체 중심이라 띠용 때 눈 밖으로 튀어나가는데, 일부러 유지한다.
 
 type DogProps = {
-  pose?: 'think' | 'eureka'
+  pose?: 'think' | 'eureka' | 'typing'
   still?: boolean // 크기 변화 없이 포즈만 (작은 강아지용)
   decor?: boolean // 생각 방울 / 폭발 / 띠용 글자
   className?: string
 }
 
+// 뒷모습으로 노트북을 폭풍 타이핑하는 포즈 (만드는 중 화면)
+function DogTyping() {
+  return (
+    <svg className="dog typing" viewBox="0 0 320 380" aria-hidden="true">
+      <ellipse cx="160" cy="352" rx="124" ry="14" fill="rgba(0,0,0,.10)" />
+      <ellipse cx="160" cy="318" rx="108" ry="26" fill="#6C7BD9" />
+      <ellipse cx="160" cy="308" rx="108" ry="26" fill="#9AA6F5" stroke="var(--ink)" strokeWidth="2.5" />
+      {/* 노트북: 강아지 앞(화면상 위)에 뚜껑 뒷면이 머리 위로 보인다 */}
+      <g className="laptop">
+        <rect x="56" y="178" width="208" height="14" rx="5" fill="#2F3340" />
+        <rect x="64" y="60" width="192" height="126" rx="12" fill="#3B3F4A" stroke="var(--ink)" strokeWidth="2.5" />
+        <rect x="72" y="68" width="176" height="110" rx="8" fill="#4A4F5C" />
+        <g fill="#C9CCD6" opacity=".9" transform="translate(0 -36)">
+          <ellipse cx="152" cy="140" rx="3.2" ry="4.2" /><ellipse cx="160" cy="137" rx="3.2" ry="4.2" /><ellipse cx="168" cy="140" rx="3.2" ry="4.2" />
+          <ellipse cx="147" cy="149" rx="2.8" ry="3.6" /><ellipse cx="173" cy="149" rx="2.8" ry="3.6" />
+          <path d="M160 145c-6 0-11 5-11 10 0 3.4 2.4 5.6 5.3 5.6 2 0 3.6-1 5.7-1s3.7 1 5.7 1c2.9 0 5.3-2.2 5.3-5.6 0-5-5-10-11-10z" />
+        </g>
+        <rect x="64" y="60" width="192" height="6" rx="3" fill="#7F8BFF" opacity=".55" />
+      </g>
+      {/* 타이핑 효과 */}
+      <g className="sparks" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round">
+        <path className="sp1" d="M52 180l-9-10M46 192l-13-1" /><path className="sp2" d="M268 180l9-10M274 192l13-1" />
+      </g>
+      {/* 꼬리 */}
+      <path className="tail" d="M182 318C214 318 236 290 238 262" fill="none" stroke="var(--fur)" strokeWidth="16" strokeLinecap="round" />
+      {/* 몸통(등) */}
+      <ellipse cx="160" cy="252" rx="74" ry="82" fill="var(--fur)" />
+      {/* 양옆으로 삐져나온 뒷발 */}
+      <ellipse cx="92" cy="322" rx="20" ry="13" fill="var(--fur-dark)" />
+      <ellipse cx="228" cy="322" rx="20" ry="13" fill="var(--fur-dark)" />
+      {/* 머리(뒤통수) + 귀 */}
+      <g className="head">
+        <ellipse cx="100" cy="174" rx="22" ry="40" fill="var(--fur-dark)" transform="rotate(14 100 174)" />
+        <ellipse cx="220" cy="174" rx="22" ry="40" fill="var(--fur-dark)" transform="rotate(-14 220 174)" />
+        <circle cx="160" cy="166" r="56" fill="var(--fur)" />
+        <path d="M150 114q10-10 20 0" fill="none" stroke="var(--fur-dark)" strokeWidth="5" strokeLinecap="round" />
+      </g>
+      {/* 팔: 어깨에서 노트북 자판(위)으로, 머리 앞에 그린다 */}
+      <g className="arm-l"><path d="M98 252C70 244 58 220 70 200" fill="none" stroke="var(--fur)" strokeWidth="18" strokeLinecap="round" /><circle cx="70" cy="194" r="12" fill="var(--fur-dark)" stroke="var(--fur)" strokeWidth="2" /></g>
+      <g className="arm-r"><path d="M222 252C250 244 262 220 250 200" fill="none" stroke="var(--fur)" strokeWidth="18" strokeLinecap="round" /><circle cx="250" cy="194" r="12" fill="var(--fur-dark)" stroke="var(--fur)" strokeWidth="2" /></g>
+    </svg>
+  )
+}
+
 export function Dog({ pose = 'think', still = false, decor = false, className = '' }: DogProps) {
+  if (pose === 'typing') return <div className={['dogwrap', 'typing', className].filter(Boolean).join(' ')}><DogTyping /></div>
   const cls = ['dogwrap', pose === 'eureka' ? 'eureka' : '', still ? 'still' : '', className].filter(Boolean).join(' ')
   return (
     <div className={cls}>
