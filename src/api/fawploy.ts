@@ -104,10 +104,10 @@ export class ApiError extends Error {
 
 export function describeApiError(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.status === 404) return '공개 저장소나 커밋을 찾지 못했어요. 주소와 브랜치를 확인해 주세요.'
+    if (err.status === 404) return '요청한 프로젝트나 작업을 찾지 못했어요. 잠시 후 다시 확인해 주세요.'
     if (err.status === 409) return '지금 상태에서는 할 수 없는 요청이에요. 잠시 후 다시 시도해 주세요.'
-    if (err.status === 502) return 'GitHub 연결에 실패했어요. 잠시 후 다시 시도해 주세요.'
-    if (err.status === 503) return 'GitHub 요청 제한 또는 저장소 오류가 있어요. 잠시 후 다시 시도해 주세요.'
+    if (err.status === 502) return '외부 서비스 또는 배포 작업에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'
+    if (err.status === 503) return '서비스가 일시적으로 준비되지 않았어요. 잠시 후 다시 시도해 주세요.'
     return err.message
   }
   if (err instanceof Error) return err.message
