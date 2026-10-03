@@ -78,12 +78,12 @@ function App() {
       const res = await api.decideAnalysis(record.projectId, record.projectToken, analysis.analysis_id, decision, c.signal)
       if (c.signal.aborted) return
       if (decision.action === 'approve') {
-        if (!res.deployment_id) throw new Error('승인 응답에 deployment_id 가 없어요. 백엔드 응답을 확인해 주세요.')
+        if (!res.deployment_id) throw new Error('承認レスポンスに deployment_id がありません。バックエンドの応答を確認してください。')
         const cand = analysis.recommendation?.candidates.find((x) => x.target === decision.target)
         const updated = remember({ ...record, deploymentId: res.deployment_id, decidedTarget: decision.target, decidedLabel: cand?.label ?? analysis.recommendation?.label })
         setStage({ name: 'deploying', record: updated, deployment: null, error: null })
       } else {
-        if (!res.analysis_id) throw new Error('수정 응답에 analysis_id 가 없어요. 백엔드 응답을 확인해 주세요.')
+        if (!res.analysis_id) throw new Error('修正レスポンスに analysis_id がありません。バックエンドの応答を確認してください。')
         const updated = remember({ ...record, analysisId: res.analysis_id })
         setStage({ name: 'working', input: inputOf(updated), phase: 'analyzing', error: null, record: updated, analysis: null })
       }
@@ -140,7 +140,7 @@ function App() {
         if (c.signal.aborted) return true
         const updated = remember({ ...rec, source })
         if (source.status === 'ready') { void beginAnalysis(updated); return true }
-        if (source.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: source.error_message || '소스를 보관하지 못했어요.', record: updated, analysis: null }); return true }
+        if (source.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: source.error_message || 'ソースを保存できませんでした。', record: updated, analysis: null }); return true }
         return false
       }, POLL.source)
     }
@@ -150,7 +150,7 @@ function App() {
         const analysis = await api.getAnalysis(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
         if (isAnalysisReady(analysis)) { setStage({ name: 'working', input: stage.input, phase: 'analyzing', error: null, record: rec, analysis }); return true }
-        if (analysis.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: analysis.error_message || '분석에 실패했어요.', record: rec, analysis: null }); return true }
+        if (analysis.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: analysis.error_message || '分析に失敗しました。', record: rec, analysis: null }); return true }
         return false
       }, POLL.analysis, LIMIT.analysis)
     }
@@ -186,16 +186,16 @@ function App() {
   }, [stage.name, stage.name === 'working' ? `${stage.phase}:${stage.record?.source.source_id}:${stage.record?.analysisId}:${stage.analysis ? 1 : 0}` : '', stage.name === 'deploying' ? stage.record.deploymentId : '', stage.name === 'deployed' ? `${stage.deployment.deployment_id}:${stage.deployment.status}:${stage.stopping ? 1 : 0}` : ''])
 
   const current = stage
-  const labelOf = (r: SourceRecord, d?: Deployment | null) => d?.label || r.decidedLabel || r.decidedTarget || '거기'
+  const labelOf = (r: SourceRecord, d?: Deployment | null) => d?.label || r.decidedLabel || r.decidedTarget || 'そこ'
 
   return (
     <main className="app">
       <div className="brand">
         <PawIcon className="paw" />
-        Pawploy <small>배포 멍멍이</small>
-        {mock && <span className="mockbadge" title="분석·배포 API 가 아직 없어 샘플 응답으로 동작 중">목 모드</span>}
-        <span className={`api ${apiState}`} title="백엔드 상태"><i />{apiState === 'ok' ? '서버 연결됨' : apiState === 'down' ? '서버 응답 없음' : '서버 확인 중'}</span>
-        <button className="histbtn" type="button" onClick={() => setHistoryOpen(true)} aria-haspopup="dialog">히스토리{history.length > 0 && <b>{history.length}</b>}</button>
+        Pawploy <small>デプロイわんこ</small>
+        {mock && <span className="mockbadge" title="分析・デプロイ API がまだないため、サンプル応答で動作中">モックモード</span>}
+        <span className={`api ${apiState}`} title="バックエンドの状態"><i />{apiState === 'ok' ? 'サーバー接続OK' : apiState === 'down' ? 'サーバー応答なし' : 'サーバー確認中'}</span>
+        <button className="histbtn" type="button" onClick={() => setHistoryOpen(true)} aria-haspopup="dialog">履歴{history.length > 0 && <b>{history.length}</b>}</button>
       </div>
 
       {current.name === 'landing' && <Landing onSubmit={(input) => void start(input)} historyCount={history.length} onOpenHistory={() => setHistoryOpen(true)} />}
@@ -241,8 +241,8 @@ function errorStage(s: Stage, message: string): Stage {
   return s
 }
 function timeoutStage(s: Stage): Stage {
-  if (s.name === 'working') return { ...s, phase: 'error', error: '너무 오래 걸리고 있어요. 히스토리에서 다시 열어 확인해 주세요.' }
-  if (s.name === 'deploying') return { ...s, error: '배포가 너무 오래 걸리고 있어요. 히스토리에서 다시 열어 확인해 주세요.' }
+  if (s.name === 'working') return { ...s, phase: 'error', error: '時間がかかりすぎています。履歴からもう一度開いて確認してください。' }
+  if (s.name === 'deploying') return { ...s, error: 'デプロイに時間がかかりすぎています。履歴からもう一度開いて確認してください。' }
   return s
 }
 

@@ -18,40 +18,40 @@ export function Landing({ onSubmit, historyCount, onOpenHistory }: Props) {
   const submit = (event: FormEvent) => {
     event.preventDefault()
     let url: URL
-    try { url = new URL(githubUrl.trim()) } catch { setError('GitHub 저장소 주소를 입력해 줘.'); return }
+    try { url = new URL(githubUrl.trim()) } catch { setError('GitHubリポジトリのURLを入れてね。'); return }
     if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.port || url.search || url.hash ||
         !/^\/[A-Za-z0-9-]+\/[A-Za-z0-9_.-]+(?:\.git)?\/?$/.test(url.pathname)) {
-      setError('https://github.com/소유자/저장소 형식의 공개 저장소 주소가 필요해.')
+      setError('https://github.com/オーナー/リポジトリ 形式の公開リポジトリURLが必要だよ。')
       return
     }
     const name = projectName.trim() || url.pathname.split('/')[2].replace(/\.git$/, '')
-    if (name.length > 80) { setError('프로젝트 이름은 80자 이하로 적어 줘.'); return }
+    if (name.length > 80) { setError('プロジェクト名は80文字以内にしてね。'); return }
     setError('')
     onSubmit({ githubUrl: githubUrl.trim(), ref: ref.trim(), projectName: name })
   }
 
   return (
-    <section className="landing" aria-label="GitHub 저장소 넣기">
+    <section className="landing" aria-label="GitHubリポジトリを入力">
       <form className="drop" onSubmit={submit}>
         <svg className="drop-ring" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96" /></svg>
         <div className="inner">
           <LinkIcon />
-          <h1><mark>GitHub 주소</mark>를<br />넣어줘!</h1>
-          <label className="sr" htmlFor="github-url">공개 저장소 URL</label>
+          <h1><mark>GitHubのURL</mark>を<br />ちょうだい!</h1>
+          <label className="sr" htmlFor="github-url">公開リポジトリのURL</label>
           <input id="github-url" className="url" type="url" autoComplete="url" required placeholder="https://github.com/owner/repo" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-          <button className="btn primary" type="submit">멍멍아 부탁해!</button>
+          <button className="btn primary" type="submit">わんこ、お願い!</button>
         </div>
       </form>
       {error && <p className="err" role="alert">{error}</p>}
       <details className="landing-opts">
-        <summary>브랜치나 이름을 정하고 싶으면 (선택)</summary>
+        <summary>ブランチや名前を決めたいなら(任意)</summary>
         <div className="opts">
-          <label htmlFor="github-ref">브랜치 · 태그 · 커밋<input id="github-ref" type="text" maxLength={200} placeholder="비우면 기본 브랜치" value={ref} onChange={(e) => setRef(e.target.value)} form="" /></label>
-          <label htmlFor="project-name">프로젝트 이름<input id="project-name" type="text" maxLength={80} placeholder="비우면 저장소 이름" value={projectName} onChange={(e) => setProjectName(e.target.value)} /></label>
+          <label htmlFor="github-ref">ブランチ・タグ・コミット<input id="github-ref" type="text" maxLength={200} placeholder="空欄ならデフォルトブランチ" value={ref} onChange={(e) => setRef(e.target.value)} form="" /></label>
+          <label htmlFor="project-name">プロジェクト名<input id="project-name" type="text" maxLength={80} placeholder="空欄ならリポジトリ名" value={projectName} onChange={(e) => setProjectName(e.target.value)} /></label>
         </div>
       </details>
-      <p className="landing-foot">공개 저장소만 돼. 멍멍이가 코드를 보고 어디에 올릴지 고른 다음, 네가 좋다고 하면 바로 배포해.</p>
-      {historyCount > 0 && <p className="landing-hint">전에 넣은 저장소 {historyCount}개가 있어. <button className="linkbtn" type="button" onClick={onOpenHistory}>히스토리에서 이어 보기</button></p>}
+      <p className="landing-foot">公開リポジトリだけ対応してるよ。わんこがコードを見てどこに載せるか選んで、きみがOKしたらすぐデプロイするね。</p>
+      {historyCount > 0 && <p className="landing-hint">前に入れたリポジトリが{historyCount}件あるよ。<button className="linkbtn" type="button" onClick={onOpenHistory}>履歴から続きを見る</button></p>}
     </section>
   )
 }

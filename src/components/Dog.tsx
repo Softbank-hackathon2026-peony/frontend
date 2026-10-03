@@ -67,7 +67,7 @@ export function Dog({ pose = 'think', still = false, decor = false, className = 
             </svg>
           </div>
           <div className="thinks" aria-hidden="true"><i /><i /><i /></div>
-          <div className="ddiyong" aria-hidden="true">띠용!</div>
+          <div className="ddiyong" aria-hidden="true">ピコーン!</div>
         </>
       )}
       <svg className="dog" viewBox="0 0 320 380" aria-hidden="true">
