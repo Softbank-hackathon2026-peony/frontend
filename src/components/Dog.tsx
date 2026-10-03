@@ -2,7 +2,7 @@
 // 눈동자 확대 기준점이 그림 전체 중심이라 띠용 때 눈 밖으로 튀어나가는데, 일부러 유지한다.
 
 type DogProps = {
-  pose?: 'think' | 'eureka' | 'typing'
+  pose?: 'think' | 'eureka' | 'typing' | 'happy'
   still?: boolean // 크기 변화 없이 포즈만 (작은 강아지용)
   decor?: boolean // 생각 방울 / 폭발 / 띠용 글자
   className?: string
@@ -54,7 +54,7 @@ function DogTyping() {
 
 export function Dog({ pose = 'think', still = false, decor = false, className = '' }: DogProps) {
   if (pose === 'typing') return <div className={['dogwrap', 'typing', className].filter(Boolean).join(' ')}><DogTyping /></div>
-  const cls = ['dogwrap', pose === 'eureka' ? 'eureka' : '', still ? 'still' : '', className].filter(Boolean).join(' ')
+  const cls = ['dogwrap', pose === 'eureka' ? 'eureka' : pose === 'happy' ? 'happy' : '', still ? 'still' : '', className].filter(Boolean).join(' ')
   return (
     <div className={cls}>
       {decor && (
@@ -105,6 +105,9 @@ export function Dog({ pose = 'think', still = false, decor = false, className = 
         <ellipse cx="206" cy="128" rx="9" ry="5" fill="#FF9AA2" opacity=".7" />
         <ellipse cx="162" cy="130" rx="9" ry="6.5" fill="var(--ink)" />
         <path className="mouth-line" d="M150 150 q12 -6 24 0" fill="none" stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round" />
+        <path className="eye-happy" d="M126 106 q12 -12 24 0" fill="none" stroke="var(--ink)" strokeWidth="4.5" strokeLinecap="round" />
+        <path className="eye-happy" d="M174 106 q12 -12 24 0" fill="none" stroke="var(--ink)" strokeWidth="4.5" strokeLinecap="round" />
+        <path className="mouth-smile" d="M140 146 q22 20 44 0" fill="none" stroke="var(--ink)" strokeWidth="4" strokeLinecap="round" />
         <g className="mouth-open">
           <ellipse cx="162" cy="152" rx="12" ry="14" fill="var(--ink)" />
           <ellipse cx="162" cy="160" rx="7" ry="5" fill="#FF8A8A" />

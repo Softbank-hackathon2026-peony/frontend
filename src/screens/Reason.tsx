@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Dog } from '../components/Dog'
 import { BoxIcon, ChipIcon, ClockIcon, CloudIcon } from '../components/Icons'
 import type { Analysis, Candidate, Cost } from '../api/fawploy'
+import { euro } from '../lib/particle'
 
 type Props = {
   analysis: Analysis
@@ -45,10 +46,10 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
   return (
     <section className="reason" aria-label="선택 이유">
       <div className="rhead">
-        <Dog pose="eureka" still className="minidog" />
+        <Dog pose="happy" still className="minidog" />
         <div>
           <div className="eyebrow">분석 결과 · <span className="raw">{repositoryUrl.replace(/^https:\/\/github\.com\//, '')}</span>{rec.commit_sha && <> · <code>{rec.commit_sha.slice(0, 7)}</code></>}{rec.model_id && <> · <code>{rec.model_id}</code></>}</div>
-          <h2>그래서 <span className="nowrap"><em>{rec.label}</em>로</span> 배포하기로 했어</h2>
+          <h2>그래서 <span className="nowrap"><em>{rec.label}</em>{euro(rec.label).slice(rec.label.length)}</span> 배포하기로 했어</h2>
           <p>{rec.summary}</p>
         </div>
       </div>

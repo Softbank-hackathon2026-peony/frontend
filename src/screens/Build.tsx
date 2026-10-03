@@ -1,6 +1,7 @@
 import { Dog } from '../components/Dog'
 import { CheckIcon } from '../components/Icons'
 import { DEPLOY_STEPS, parseStep, type DeployStep, type Deployment } from '../api/fawploy'
+import { euro } from '../lib/particle'
 
 type Props = { deployment: Deployment | null; label: string; error: string | null; onRestart: () => void }
 
@@ -25,8 +26,8 @@ export function Build({ deployment, label, error, onRestart }: Props) {
 
   return (
     <section className="build" aria-live="polite">
-      <Dog pose={failed ? "eureka" : "typing"} still />
-      <h2>{failed ? <><span className="nowrap"><em>{label}</em></span> 배포가 멈췄어</> : <><span className="nowrap"><em>{label}</em>로</span> 만드는 중…</>}</h2>
+      <Dog pose={failed ? "think" : "typing"} still />
+      <h2>{failed ? <><span className="nowrap"><em>{label}</em></span> 배포가 멈췄어</> : <><span className="nowrap"><em>{label}</em>{euro(label).slice(label.length)}</span> 만드는 중…</>}</h2>
       <ul className="steps">
         {ORDER.map((s, i) => {
           const state = failed && i === idx ? 'failed' : i < idx ? 'done' : i === idx ? 'doing' : ''

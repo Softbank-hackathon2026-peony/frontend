@@ -361,3 +361,16 @@ form.drop:focus-within svg.drop-ring circle { fill: var(--accent-soft); stroke-w
 .dog.typing .sparks .sp2 { animation-delay: .12s; }
 @keyframes spark { 0% { opacity: 1; } 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .dog.typing .arm-l, .dog.typing .arm-r, .dog.typing .head, .dog.typing .tail, .dog.typing .sparks path { animation: none !important; } }
+
+/* 웃는 포즈 (완료·근거 화면) — 띠용 얼굴은 띠용 순간에만 */
+.dog .eye-happy, .dog .mouth-smile { opacity: 0; transition: opacity .2s; }
+.dogwrap.happy .eye-white, .dogwrap.happy .pupil, .dogwrap.happy .lid { opacity: 0; animation: none; }
+.dogwrap.happy .eye-happy, .dogwrap.happy .mouth-smile { opacity: 1; }
+.dogwrap.happy .mouth-line, .dogwrap.happy .mouth-open { opacity: 0; }
+.dogwrap.happy .brow-l { transform: rotate(-2deg) translateY(-7px); }
+.dogwrap.happy .brow-r { transform: rotate(2deg) translateY(-7px); }
+.dogwrap.happy .arm-chin { transform: rotate(-80deg) translate(-6px,-26px); animation: wavepaw .5s ease-in-out infinite alternate; }
+@keyframes wavepaw { from { transform: rotate(-80deg) translate(-6px,-26px); } to { transform: rotate(-96deg) translate(-2px,-30px); } }
+.dogwrap.happy .foot-top { animation: none; transform: none; }
+.dogwrap.happy .tail { animation-duration: .4s; }
+.dogwrap.happy .thinks, .dogwrap.happy .sweat { display: none; }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Dog } from '../components/Dog'
 import type { Analysis } from '../api/fawploy'
+import { eul } from '../lib/particle'
 
 export type WorkPhase = 'creating' | 'registering' | 'storing' | 'analyzing' | 'error'
 type Props = {
@@ -70,7 +71,7 @@ export function Thinking({ repositoryUrl, phase, error, analysis, onRetry, onCan
       setEureka(true); setLine('')
       await sleep(reduced ? 0 : 650)
       let acc = ''
-      for (const ch of `${label}로 배포할게!`) { if (!alive) return; acc += ch; setLine(acc); await sleep(reduced ? 0 : 38) }
+      for (const ch of `${eul(label)} 써야겠군!!`) { if (!alive) return; acc += ch; setLine(acc); await sleep(reduced ? 0 : 38) }
       setTyping(false)
       await sleep(reduced ? 200 : 1600)
       if (alive) finishedRef.current()
