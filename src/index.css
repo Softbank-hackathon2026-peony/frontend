@@ -382,3 +382,7 @@ form.drop:focus-within svg.drop-ring circle { fill: var(--accent-soft); stroke-w
 .dogwrap.happy .foot-top { animation: none; transform: none; }
 .dogwrap.happy .tail { animation-duration: .4s; }
 .dogwrap.happy .thinks, .dogwrap.happy .sweat { display: none; }
+
+.decide .deployspec { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; font-size: 13.5px; }
+.decide .deployspec b { font-weight: 700; }
+.decide .deployspec span { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }

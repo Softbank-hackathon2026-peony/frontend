@@ -66,7 +66,7 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
 
       <div className="flow">
         <div className="clues">
-          {rec.clues.map((c, i) => {
+          {rec.clues.slice(0, 6).map((c, i) => {
             const Icon = ICONS[i % ICONS.length]
             return (
               <div className="clue" key={`${c.file}-${c.line}-${i}`} style={{ '--c': COLORS[i % COLORS.length], '--i': i } as React.CSSProperties}>
@@ -91,6 +91,9 @@ export function Reason({ analysis, repositoryUrl, busy, error, onApprove, onRevi
           <div className="eyebrow">결정 · {cloudLabel(rec.cloud)}{rec.size && ` · ${rec.size}`}</div>
           <h3>{rec.label}</h3>
           <div className="why">{rec.reason}</div>
+          {(rec.container_port || rec.health_path) && (
+            <div className="deployspec"><b>배포 설정</b><span>{rec.container_port ? `포트 ${rec.container_port}` : ''}{rec.container_port && rec.health_path ? ' · ' : ''}{rec.health_path ? `헬스체크 ${rec.health_path}` : ''}</span></div>
+          )}
           <CostLine cost={rec.cost} />
           {rec.permissions.length > 0 && (
             <div className="perm"><b>배포된 앱이 받는 권한</b><ul>{rec.permissions.map((p) => <li key={p}>{p}</li>)}</ul></div>

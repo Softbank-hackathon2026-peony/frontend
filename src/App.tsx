@@ -7,7 +7,7 @@ import { Build } from './screens/Build'
 import { Deployed } from './screens/Deployed'
 import { HistoryPanel } from './components/HistoryPanel'
 import * as api from './api'
-import { isDeployed, type Analysis, type Deployment } from './api/fawploy'
+import { isAnalysisReady, isDeployed, type Analysis, type Deployment } from './api/fawploy'
 import { loadHistory, removeRecord, saveRecord, type SourceRecord } from './api/history'
 
 // 화면 흐름: landing → working(소스 보관 → 분석) → reason(근거·선택) → deploying(단계) → deployed(URL·카운트다운)
@@ -149,7 +149,7 @@ function App() {
       loop(async () => {
         const analysis = await api.getAnalysis(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
-        if (analysis.status === 'ready' && analysis.recommendation) { setStage({ name: 'working', input: stage.input, phase: 'analyzing', error: null, record: rec, analysis }); return true }
+        if (isAnalysisReady(analysis)) { setStage({ name: 'working', input: stage.input, phase: 'analyzing', error: null, record: rec, analysis }); return true }
         if (analysis.status === 'failed') { setStage({ name: 'working', input: stage.input, phase: 'error', error: analysis.error_message || '분석에 실패했어요.', record: rec, analysis: null }); return true }
         return false
       }, POLL.analysis, LIMIT.analysis)
@@ -164,11 +164,18 @@ function App() {
         return d.status === 'failed' || d.status === 'destroyed'
       }, POLL.deploy, LIMIT.deploy)
     }
-    if (stage.name === 'deployed' && stage.deployment.status !== 'destroyed' && stage.deployment.status !== 'failed' && !stage.stopping) {
+    // URL이 발급된 순간 실제 서비스가 접속 가능한 배포 완료 상태다.
+    // 백엔드가 최종 상태 반영 전에 status=deploying을 잠시 유지할 수 있으므로
+    // status만 보고 계속 polling하지 않는다.
+    if (stage.name === 'deployed' && !isDeployed(stage.deployment) && stage.deployment.status !== 'destroyed' && stage.deployment.status !== 'failed' && !stage.stopping) {
       const rec = stage.record, id = stage.deployment.deployment_id
       loop(async () => {
         const d = await api.getDeployment(rec.projectId, rec.projectToken, id, c.signal)
         if (c.signal.aborted) return true
+        if (isDeployed(d)) {
+          setStage((s) => (s.name === 'deployed' && !s.stopping ? { ...s, deployment: d } : s))
+          return true
+        }
         setStage((s) => (s.name === 'deployed' && !s.stopping ? { ...s, deployment: d } : s))
         return d.status === 'destroyed' || d.status === 'failed'
       }, POLL.deployed)
