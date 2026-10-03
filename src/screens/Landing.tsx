@@ -39,7 +39,7 @@ export function Landing({ onSubmit, historyCount, onOpenHistory }: Props) {
           <h1><mark>GitHub 주소</mark>를<br />넣어줘!</h1>
           <label className="sr" htmlFor="github-url">공개 저장소 URL</label>
           <input id="github-url" className="url" type="url" autoComplete="url" required placeholder="https://github.com/owner/repo" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-          <button className="btn primary" type="submit">부탁해!</button>
+          <button className="btn primary" type="submit">멍멍아 부탁해!</button>
         </div>
       </form>
       {error && <p className="err" role="alert">{error}</p>}
