@@ -271,7 +271,7 @@ form.drop:focus-within svg.drop-ring circle { fill: var(--accent-soft); stroke-w
   .history .del { grid-column: 3; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .drop svg.drop-ring circle, .drop .arrow, .dog .pupil, .dog .lid, .dog .tail, .dog .arm-chin, .dog .foot-top, .thinks i, .dog .sweat, .steps li.doing .dot { animation: none !important; }
+  .drop svg.drop-ring circle, .drop .arrow, .dog .pupil, .dog .lid, .dog .tail, .dog .arm-chin, .dog .foot-top, .dog .clap-l, .dog .clap-r, .dog .clap-fx, .thinks i, .dog .sweat, .steps li.doing .dot { animation: none !important; }
   .dog, .bubble, .burst, .ddiyong { transition-duration: .01s !important; }
   .clue, .decide, .meter .bar i { animation-duration: .01s !important; animation-delay: 0s !important; }
 }
@@ -369,8 +369,16 @@ form.drop:focus-within svg.drop-ring circle { fill: var(--accent-soft); stroke-w
 .dogwrap.happy .mouth-line, .dogwrap.happy .mouth-open { opacity: 0; }
 .dogwrap.happy .brow-l { transform: rotate(-2deg) translateY(-7px); }
 .dogwrap.happy .brow-r { transform: rotate(2deg) translateY(-7px); }
-.dogwrap.happy .arm-chin { transform: rotate(-80deg) translate(-6px,-26px); animation: wavepaw .5s ease-in-out infinite alternate; }
-@keyframes wavepaw { from { transform: rotate(-80deg) translate(-6px,-26px); } to { transform: rotate(-96deg) translate(-2px,-30px); } }
+.dog .clap { opacity: 0; }
+.dogwrap.happy .clap { opacity: 1; }
+.dogwrap.happy .arm-lap, .dogwrap.happy .arm-chin { opacity: 0; animation: none; }
+/* 박수: 0.11초에 한 번 손이 모이고(초당 ~4.5회), 모이는 순간에만 짝 효과선이 번쩍 */
+.dogwrap.happy .clap-l { transform-box: fill-box; transform-origin: 0% 0%; animation: clapL .22s ease-in-out infinite; }
+.dogwrap.happy .clap-r { transform-box: fill-box; transform-origin: 100% 0%; animation: clapR .22s ease-in-out infinite; }
+@keyframes clapL { 0%, 100% { transform: rotate(-22deg) translate(-8px, 3px); } 50% { transform: rotate(3deg) translate(3px, 0); } }
+@keyframes clapR { 0%, 100% { transform: rotate(22deg) translate(8px, 3px); } 50% { transform: rotate(-3deg) translate(-3px, 0); } }
+.dogwrap.happy .clap-fx { animation: clapfx .22s steps(1) infinite; }
+@keyframes clapfx { 0%, 34% { opacity: 0; } 35%, 65% { opacity: 1; } 66%, 100% { opacity: 0; } }
 .dogwrap.happy .foot-top { animation: none; transform: none; }
 .dogwrap.happy .tail { animation-duration: .4s; }
 .dogwrap.happy .thinks, .dogwrap.happy .sweat { display: none; }

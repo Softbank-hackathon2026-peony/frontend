@@ -83,8 +83,10 @@ export function Dog({ pose = 'think', still = false, decor = false, className = 
           <path d="M186 268 C 196 300 150 306 112 302" fill="none" stroke="var(--fur)" strokeWidth="24" strokeLinecap="round" />
           <ellipse cx="102" cy="302" rx="21" ry="13" fill="var(--fur-dark)" />
         </g>
-        <path d="M100 210 C 88 240 100 262 128 272" fill="none" stroke="var(--fur)" strokeWidth="20" strokeLinecap="round" />
-        <circle cx="132" cy="274" r="12" fill="var(--fur-dark)" />
+        <g className="arm-lap">
+          <path d="M100 210 C 88 240 100 262 128 272" fill="none" stroke="var(--fur)" strokeWidth="20" strokeLinecap="round" />
+          <circle cx="132" cy="274" r="12" fill="var(--fur-dark)" />
+        </g>
         <ellipse cx="108" cy="112" rx="22" ry="40" fill="var(--fur-dark)" transform="rotate(14 108 112)" />
         <ellipse cx="216" cy="112" rx="22" ry="40" fill="var(--fur-dark)" transform="rotate(-14 216 112)" />
         <circle cx="162" cy="108" r="60" fill="var(--fur)" />
@@ -116,6 +118,20 @@ export function Dog({ pose = 'think', still = false, decor = false, className = 
         <g className="arm-chin">
           <path d="M222 208 C 254 224 246 170 206 158" fill="none" stroke="var(--fur)" strokeWidth="20" strokeLinecap="round" />
           <circle cx="202" cy="156" r="13" fill="var(--fur-dark)" />
+        </g>
+        {/* 박수 (웃는 포즈에서만) */}
+        <g className="clap">
+          <g className="clap-l">
+            <path d="M100 214 C 104 240 126 236 146 226" fill="none" stroke="var(--fur)" strokeWidth="20" strokeLinecap="round" />
+            <circle cx="150" cy="224" r="13" fill="var(--fur-dark)" />
+          </g>
+          <g className="clap-r">
+            <path d="M222 212 C 218 238 196 234 176 224" fill="none" stroke="var(--fur)" strokeWidth="20" strokeLinecap="round" />
+            <circle cx="172" cy="222" r="13" fill="var(--fur-dark)" />
+          </g>
+          <g className="clap-fx" fill="none" stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round">
+            <path d="M161 203 v-9 M150 206 l-6 -7 M172 206 l6 -7 M134 219 l-9 -3 M188 219 l9 -3" />
+          </g>
         </g>
       </svg>
     </div>
